@@ -1,0 +1,286 @@
+import time
+import os
+import torch
+import torch.nn as nn
+from src.utils import ReLU, LeakyReLU
+
+EPOCHS: int = 30
+
+class BatchNorm(nn.Module):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, device=None):
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(num_features))
+        self.nbias = nn.Parameter(torch.ones(num_features))
+        
+        self.eps = eps
+        self.momentum = momentum
+        
+        self.register_buffer('running_mean', torch.zeros(num_features))
+        self.register_buffer('running_var', torch.ones(num_features))
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x has dim: [B, C, H, W]
+        weight = self.weight.view(1,-1,1,1)
+        bias = self.bias.view(1,-1,1,1)
+        
+        if self.training:
+            mean = x.mean(dim=(0, 2, 3)) # Mean on axes: [B, H, W]
+            var = x.var(dim=(0, 2, 3)) # Var on axes: [B, H, W]
+            
+            with torch.no_grad():
+                self.running_mean = (1 - self.momentum) * self.running_mean  * self.momentum * mean
+                self.running_var = (1 - self.momentum) * self.running_var * self.momentum * var
+                
+        else:
+            mean = self.running_mean
+            var = self.running_var
+            
+        # [1, C, 1, 1] for broadcasting
+        mean = mean.view(1, -1, 1, 1)
+        var = var.view(1, -1, 1, 1)
+        
+        norm = (x - mean) / torch.sqrt(var + self.eps)
+        scale = norm * weight + bias
+        
+        return scale
+    
+class ResidualBlock(nn.Module):
+    def __init__(self, num_features: int, stride: int = 1, kernel_size: int = 3, padding: int = 1, leaky: bool = False): # ResNet-18 uses num_features = 64, as the in_channels = out_channels of the convolutional layers stacked inside the residual block 
+        super().__init__()
+        self.leaky = leaky
+        self.norm1 = BatchNorm(num_features)
+        # Since BatchNorm includes learnable parameters, we need to instantiate another instance attribute which is going to be used for the input to the second convolutional layer
+        self.norm2 = BatchNorm(num_features)
+        
+        self.conv1 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding)
+        self.conv2 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding)
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        identity = x
+        if self.leaky:
+            x = LeakyReLU(self.conv1(self.norm1(x))) # self.norm basically normalizes the channels, which have the role of acting as separate informational pathways/learned feature detectors
+        else:
+            x = ReLU(self.conv1(self.norm1(x)))
+        x = self.conv2(self.norm2(x))
+        skip_connection = x + identity
+        if self.leaky:
+            return LeakyReLU(skip_connection)
+        else:
+            return ReLU(skip_connection)
+            
+    class ResNet_18(nn.Module):
+        """ResNet_18 model architecture in pure PyTorch.
+        
+        It contains 19 layers in total: 1 initial convolutional layer, 1 initial max pooling layer,
+        followed by 4 residual blocks (each containing 4 convolutional layers organized in 2 sub-blocks, totaling 16 conv layers),
+        1 global average pooling layer, and 1 final fully connected layer.
+        The network is optimized for square 2D matrices, adapted to process intermediate spatial scaled w/o overly aggressive early downsampling.
+        
+        Layer Breakdown:
+        
+        1. Input: 3x100x100 feature matrix w/ 3 channels (e.g., standard RGB image)
+        2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 1, pad 3, output size 64x100x100
+        3. S2 (MaxPool): 3x3 window, stride 1, pad 1, output size 64x100x100 # Maintains high spatial resolution early to preserve fine-grained structural details
+        4. ResNet Layer-1 (C3, C4, C5, C6): Four 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x100x100 w/ identity skip connections
+        5. ResNet Layer-2 (C7, C8, C9, C10): Four 3x3 conv layers, 128 feature maps, transition stride 2, pad 1, output size 128x50x50 w/ projection skip connections
+        6. ResNet Layer-3 (C11, C12, C13, C14): Four 3x3 conv layers, 256 feature maps, transition stride 2, pad 1, output size 256x25x25 w/ projection skip connections
+        7. ResNet Layer-4 (C15, C16, C17, C18): Four conv layers, 512 feature maps, transition block uses a customized 5x5 filter w/ stride 5 and pad 0, output size 512x5x5 w/ projection skip connections
+        8. GAP (Global Average Pooling): 5x5 kernel size, output size 512x1x1 # Collapses all spatial elements per channel into a single mean value
+        9. F10 (Fully Connected Layer): Custom output neurons (will implement nn.Flatten -> 512 connected to target classification classes)
+        
+        Notes taken while writing this Layer Breakdown:
+        - In contrast to other ResNet architectures that use aggressive stride=2 in both the initial convolution and the MaxPool layers (which would immediately crush a 100x100 input down to 25x25), this custom variant maintains a full 100x100 spatial resolution through Layer-1 to allow deeper representation learning on smaller input sizes.
+        - Because a standard 3x3 convolution with stride=2 applied to a 25x25 matrix results in a non-integer fraction rounded down to 12x12 (due to PyTorch's floor operation), the transition block in Layer-4 is explicitly designed w/ a 5x5 kernel, stride=5, and padding=0. This geometric configuration perfectly scales the spatial grid down from 25x25 to an exact 5x5 output.
+        - GAP behaves as a robust spatial regularizer. By averaging out the final 5x5 feature plane down to 1x1, it enforces translation invariance and heavily reduces the parameter footprint of the classifier head, drastically minimizing overfitting compared to flattening a 5x5x512 matrix directly into a massive linear layer.
+        """
+        def __init__(self):
+            super().__init__()
+            
+            self.c1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=7, stride=2)
+            
+            self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            
+            # Layer 1 - Shape [100, 100]
+            self.r1 = ResidualBlock(num_features=64)
+            self.r2 = ResidualBlock(num_features=64)
+            
+            # Layer 2 - Shape [50, 50]
+            self.r3 = ResidualBlock(num_features=128, stride=2)
+            self.r4 = ResidualBlock(num_features=128)
+            
+            # Layer 3 - Shape [25, 25]
+            self.r5 = ResidualBlock(num_features=256, stride=2)
+            self.r6 = ResidualBlock(num_features=256)
+            
+            # Layer 4 - Shape [5, 5]
+            self.r7 = ResidualBlock(num_features=512, stride=5, kernel_size=5, padding=0)
+            self.r8 = ResidualBlock(num_features=512)
+            
+            self.avgpool2 = nn.AvgPool2d(kernel_size=(1, 1))
+            
+            self.fc10 = nn.Linear(in_features=512*1*1, out_features=1000)
+            
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            super().__init__()
+            # Entry input size: [Batch, 1, 100, 100]
+            x = ReLU(self.c1(x))
+            x = self.maxpool1(x)
+            
+            # ResNet Layer-1 pass
+            x = self.r1(x)
+            x = self.r2(x)
+            # ResNet Layer-2 pass
+            x = self.r3(x)
+            x = self.r4(x)
+            # ResNet Layer-3 pass
+            x = self.r5(x)
+            x = self.r6(x)
+            # ResNet Layer-4 pass
+            x = self.r7(x)
+            x = self.r8(x)
+            
+            x = self.avgpool2(x)
+            
+            # start_dim=1 assures that we flatten just [C, H, W], w/o the batch
+            x = torch.flatten(x, start_dim=1)
+            
+            x = self.fc10(x)
+            
+            return x
+        
+        """Returns the total number of parameters of ResNet_18"""
+        def params(self):
+            return sum(p.numel() for p in self.parameters())
+        
+        """Training + Evaluation Metrics"""
+        def fit(self, train_loader, val_loader, device=None, track=None, epochs=EPOCHS):
+            if device is None:
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            else:
+                device = torch.device(device)
+                
+            self.to(device)
+            
+            crit = nn.CrossEntropyLoss()
+            optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
+            # Learning rate downscaled 10x at epochs 30, 60, 90
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
+            train_loss_history = []
+            val_loss_history = []
+            
+            y_true_epoch = None
+            y_pred_epoch = None
+            
+            print(f"ResNet_18 training will start on: {device.type.upper()}")
+            print("=" * 60)
+            
+            for epoch in range(epochs):
+                self.train()
+                running_loss = 0.
+                for batch_idx, (inputs, labels) in enumerate(train_loader):
+                    inputs, labels = inputs.to(device), labels.to(device)
+                    optimizer.zero_grad                
+                    outputs = self(inputs)
+                    
+                    loss = crit(outputs, labels)
+                    
+                    loss.backward()
+                    optimizer.step()
+                    
+                    running_loss += loss.item()
+
+                    current_lr = scheduler.get_last_lr()[0]
+                    if batch_idx % 100 == 0:
+                        print(f"Epoch: {epoch+1} | Lr: {current_lr} | Batch: {batch_idx:03d} | Batch Loss {loss.item():.4f}")
+                        
+                epoch_loss = running_loss / len(train_loader)
+                
+                is_last_epoch = (epoch == epochs - 1)
+                should_return_arrays = is_last_epoch and track
+                val_accuracy, val_loss, y_true_epoch, y_pred_epoch = eval(val_loader, device=device, return_arrays=should_return_arrays)
+                
+                scheduler.step(val_loss)
+                
+                train_loss_history.append(epoch_loss)
+                val_loss_history.append(val_loss)
+                
+                print(f"Epoch {epoch+1:02d}/{epochs:02d} completed | Train Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_accuracy:.2f}%")
+                
+            if track:
+                return train_loss_history, val_loss_history, y_true_epoch, y_pred_epoch
+            
+            return train_loss_history, val_loss_history, None, None
+                
+                
+        
+        def eval(self, val_loader, device=None, verbose=False, return_arrays=False):
+            if device is None:
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            else:
+                device = torch.device(device)
+            
+            self.to(device) # Moves the model weights to device
+            self.eval()
+            
+            correct = 0
+            total = 0
+            running_val_loss = 0.0
+            criterion = nn.CrossEntropyLoss()
+            
+            # Initializing collections to hold target targets and model outputs
+            y_true = [] if return_arrays else None
+            y_pred = [] if return_arrays else None
+            
+            with torch.no_grad():
+                for images, labels in val_loader:
+                    images, labels = images.to(device), labels.to(device)
+                    outputs = self(images)
+                    
+                    loss = criterion(outputs, labels)
+                    
+                    running_val_loss += loss.item()
+                    predicted = torch.argmax(outputs, dim=1)
+                    
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+                    
+                    if return_arrays:
+                        y_true.extend(labels.cpu().tolist())
+                        y_pred.extend(predicted.cpu().tolist())
+                        
+                accuracy = 100 * correct / total
+                avg_val_loss = running_val_loss / len(val_loader)
+                
+                if verbose:
+                    print(f"Total samples evaluated: {total}")
+                    print(f"Correct predictions: {correct}")
+                
+                return accuracy, avg_val_loss, y_true, y_pred
+        
+        DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
+        
+        """Load model class method"""
+        def load(self, path=None, device=None):
+            """Loads the model's weights from a file."""
+            path = path or self.DEFAULT_WEIGHTS
+            if device is None:
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            else:
+                device = torch.device(device)
+                
+            state_dict = torch.load(path, map_location=device, weights_only=True)
+            self.load_state_dict(state_dict)
+            self.to(device)
+            
+            print(f"ResNet_18 model loaded from {path} to {device}")
+        
+        """Save model class method"""
+        def save(self, path=None):
+            """Saves the model's weights to a file."""
+            path = path or self.DEFAULT_WEIGHTS
+            dir_name = os.path.dirname(path)
+            if dir_name:
+                os.makedirs(dir_name, exist_ok=True)
+                
+            torch.save(self.state_dict(), path)
+            print(f"ResNet_18 model saved to {path}")
