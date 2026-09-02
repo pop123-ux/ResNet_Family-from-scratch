@@ -49,14 +49,14 @@ class BatchNorm(nn.Module):
         return scale
 
 class ResidualBlock(nn.Module):
-    def __init__(self, num_features: int, leaky: bool = False): # ResNet-14 uses for the first blocks num_features=64 hence the convolutional layers have a in_channels / out_channels = 64 and for the latter ones num_features=2*64=128, hence in_channels / out_channels = 128
+    def __init__(self, num_features: int, stride: int = 1, leaky: bool = False): # ResNet-14 uses for the first blocks num_features=64 hence the convolutional layers have a in_channels / out_channels = 64 and for the latter ones num_features=2*64=128, hence in_channels / out_channels = 128
         super().__init__()
         self.leaky = leaky
         self.norm1 = BatchNorm(num_features)
         self.norm2 = BatchNorm(num_features)
         # The recipe to kernel dimension unchanging is: (padding = kernel_size - 1) // 2
-        self.conv1 = nn.Conv2d(num_features, num_features, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(num_features, num_features, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(num_features, num_features, stride=stride, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(num_features, num_features, stride=stride, kernel_size=3, padding=1)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = x # Copy of input
