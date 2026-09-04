@@ -53,7 +53,7 @@ class ResidualBlock(nn.Module):
     def __init__(self, num_features: int, stride: int = 1, kernel_size: int = 3, padding: int = 1, leaky: bool = False): # ResNet-12 uses num_features = 64, as the in_channels = out_channels of the convolutional layers stacked inside the residual block 
         super().__init__()
         self.leaky = leaky
-        self.activation = LeakyReLU if leaky else ReLU
+        self.activation = LeakyReLU() if leaky else ReLU()
         
         self.norm1 = BatchNorm(num_features)
         # Since BatchNorm includes learnable parameters, we need to instantiate another instance attribute which is going to be used for the input to the second convolutional layer
