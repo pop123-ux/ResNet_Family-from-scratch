@@ -126,17 +126,17 @@ class ResNet_18(nn.Module):
         self.layer1_block2 = ResidualBlock(64, 64, stride=1, num_layers=2, leaky=self.leaky)
         
         # Layer 2 - Resolution [50, 50]
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling layer followed by 3 identical layers
         self.layer2_downsample = ResidualBlock(64, 128, stride=2, num_layers=1, leaky=self.leaky)
         self.layer2_identical = ResidualBlock(128, 128, stride=1, num_layers=3, leaky=self.leaky)
         
         # Layer 3 - Shape [25, 25]
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling layer followed by 3 identical layers
         self.layer3_downsample = ResidualBlock(128, 256, stride=2, num_layers=1, leaky=self.leaky)
         self.layer3_identical = ResidualBlock(256, 256, stride=1, num_layers=3, leaky=self.leaky)
         
         # Layer 4 - Shape [5, 5]
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling layer followed by 3 identical layers
         self.layer4_downsample = ResidualBlock(256, 512, stride=5, num_layers=1, leaky=self.leaky)
         self.layer4_identical = ResidualBlock(512, 512, stride=1, num_layers=3, leaky=self.leaky)
         
