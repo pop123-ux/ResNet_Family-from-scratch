@@ -1,3 +1,4 @@
+"""Unofficial ResNet -- the smallest possible architecture I could find"""
 import time
 import os
 import torch
@@ -49,27 +50,31 @@ class BatchNorm(nn.Module):
         return scale
 
 class ResidualBlock(nn.Module):
-    def __init__(self, num_features: int, stride: int = 1, leaky: bool = False): # ResNet-14 uses for the first blocks num_features=64 hence the convolutional layers have a in_channels / out_channels = 64 and for the latter ones num_features=2*64=128, hence in_channels / out_channels = 128
+    def __init__(self, num_features: int, stride: int = 1, kernel_size: int = 3, padding: int = 1, leaky: bool = False): # ResNet-12 uses num_features = 64, as the in_channels = out_channels of the convolutional layers stacked inside the residual block 
         super().__init__()
         self.leaky = leaky
+        self.activation = LeakyReLU if leaky else ReLU
+        
         self.norm1 = BatchNorm(num_features)
+        # Since BatchNorm includes learnable parameters, we need to instantiate another instance attribute which is going to be used for the input to the second convolutional layer
         self.norm2 = BatchNorm(num_features)
-        # The recipe to kernel dimension unchanging is: (padding = kernel_size - 1) // 2
-        self.conv1 = nn.Conv2d(num_features, num_features, stride=stride, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(num_features, num_features, stride=stride, kernel_size=3, padding=1)
+        
+        self.conv1 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding, bias=False)
+        self.conv2 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding, bias=False)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = x # Copy of input
-        if self.leaky:
-            x = LeakyReLU(self.conv1(self.norm1(x)))
-        else:
-            x = ReLU(self.conv1(self.norm1(x)))
-        x = self.conv2(self.norm2(x)) # The final convolutional is liniar before the addition, hence we dont apply ReLU here
+        
+        x = self.conv1(x)
+        x = self.norm1(x)
+        x = self.activation(x)
+        
+        x = self.conv2(x)
+        x = self.norm2(x)
+        
+        # The final convolutional block remains linear right before addition
         skip_connection = x + identity
-        if self.leaky:
-            return LeakyReLU(skip_connection)
-        else:
-            return ReLU(skip_connection)
+        return self.activation(skip_connection)
     
 class ResNet_12(nn.Module):
     """ResNet_12 model architecture in pure PyTorch.
@@ -98,25 +103,31 @@ class ResNet_12(nn.Module):
     - Stacking 10 convolutional layers inside the residual blocks allows the network to learn intricate hierarchical transformations. Since each block bypasses its original input via a shortcut line, gradients can flow backwards unimpeded during training, preventing the vanishing gradient problem
     - GAP behaves as a robust spatial regularizer. By averaging out the entire 2x24 feature plane down to 1x1, it makes the network invariant to translation shifts in the input matrix and havily discourages overfitting compared to flattening a whole matrix directly into an expensive linear layer.
     """
-    def __init__(self):
+    def __init__(self, in_channels: int = 1, num_classes: int = 96, leaky: bool = False):
         super().__init__()
+        self.leaky = leaky
+        self.activation = LeakyReLU if leaky else ReLU
         
-        self.c1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=2)
+        self.c1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False)
+        self.norm1 = BatchNorm(64)
+        
+        # S2: drops spatial maps from [64, 4, 48] down to [64, 2, 24]
         self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         
-        self.r1 = ResidualBlock(num_features=64)
-        self.r2 = ResidualBlock(num_features=64)
-        self.r3 = ResidualBlock(num_features=64)
-        self.r4 = ResidualBlock(num_features=64)
-        self.r5 = ResidualBlock(num_features=64)
+        # 5 consecutive ResNet blocks maintaining a constant depth of 64 channels
+        self.r1 = ResidualBlock(num_features=64, leaky=self.leaky)
+        self.r2 = ResidualBlock(num_features=64, leaky=self.leaky)
+        self.r3 = ResidualBlock(num_features=64, leaky=self.leaky)
+        self.r4 = ResidualBlock(num_features=64, leaky=self.leaky)
+        self.r5 = ResidualBlock(num_features=64, leaky=self.leaky)
         
         self.avgpool2 = nn.AvgPool2d(kernel_size=(2, 24)) # Alternative: nn.AdaptiveAvgPool2d((1, 1))
         
-        self.fc7 = nn.Linear(in_features=64*2*24, out_featues=96) # in_features[C, H, W] = 2072
+        self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # in_features[C, H, W] = 2072
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Entry input size: [Batch, 1, 7, 96]
-        x = ReLU(self.c1(x))
+        x = self.activation(self.norm1(self.c1(x)))
         x = self.maxpool1(x)
         
         x = self.r1(x)
@@ -129,7 +140,6 @@ class ResNet_12(nn.Module):
         
         # start_dim=1 assures that we flatten just [C, H, W], w/o the batch
         x = torch.flatten(x, start_dim=1)
-        
         x = self.fc7(x)
         
         return x
@@ -149,7 +159,8 @@ class ResNet_12(nn.Module):
         
         crit = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
-        
+        # Learning rate downscales 10x at epochs 30, 60, 90
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
         train_loss_history = []
         val_loss_history = []
         
@@ -174,6 +185,7 @@ class ResNet_12(nn.Module):
                 
                 running_loss += loss.item()
 
+                current_lr = scheduler.get_last_lr()[0]
                 if batch_idx % 100 == 0:
                     print(f"Epoch: {epoch+1} | Batch: {batch_idx:03d} | Batch Loss {loss.item():.4f}")
                     
@@ -182,6 +194,8 @@ class ResNet_12(nn.Module):
             is_last_epoch = (epoch == epochs - 1)
             should_return_arrays = is_last_epoch and track
             val_accuracy, val_loss, y_true_epoch, y_pred_epoch = eval(val_loader, device=device, return_arrays=should_return_arrays)
+            
+            scheduler.step()
             
             train_loss_history.append(epoch_loss)
             val_loss_history.append(val_loss)
@@ -239,7 +253,7 @@ class ResNet_12(nn.Module):
             
             return accuracy, avg_val_loss, y_true, y_pred
     
-    DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'alexnet_model.pth')
+    DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet12_model.pth')
     
     """Load model class method"""
     def load(self, path=None, device=None):
