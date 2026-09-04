@@ -90,7 +90,7 @@ class ResNet_34(nn.Module):
            self.activation = LeakyReLU() if leaky else ReLU()
            
            # Padding 3 to properly reach output size 112 from a 224 input
-           self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=7, stride=2, padding=3)
+           self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
            self.norm1 = BatchNorm(64)
            
            # Initial Max Pooling (3x3)
@@ -129,7 +129,7 @@ class ResNet_34(nn.Module):
            # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 14x14 spatial size -> 1x1 vector
            self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
            
-           self.fc34 = nn.Linear(512*1*1, out_features=num_classes)
+           self.fc34 = nn.Linear(512*1*1, num_classes)
            
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             x = self.activation(self.norm1(self.c1(x)))
@@ -162,7 +162,7 @@ class ResNet_34(nn.Module):
             
             # Pool, Flatten, Classify
             x = self.avgpool2(x)
-            x = nn.Flatten(x, start_dim=1)
+            x = torch.flatten(x, start_dim=1)
             x = self.fc34(x)
             
             return x
@@ -190,7 +190,7 @@ class ResNet_34(nn.Module):
             y_true_epoch = None
             y_pred_epoch = None
             
-            print(f"ResNet_18 training will start on: {device.type.upper()}")
+            print(f"ResNet_34 training will start on: {device.type.upper()}")
             print("=" * 60)
             
             for epoch in range(epochs):
@@ -218,7 +218,7 @@ class ResNet_34(nn.Module):
                 should_return_arrays = is_last_epoch and track
                 val_accuracy, val_loss, y_true_epoch, y_pred_epoch = self.evaluate(val_loader, device=device, return_arrays=should_return_arrays)
                 
-                scheduler.step(val_loss)
+                scheduler.step()
                 
                 train_loss_history.append(epoch_loss)
                 val_loss_history.append(val_loss)

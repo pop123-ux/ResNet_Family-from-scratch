@@ -225,7 +225,7 @@ class ResNet_18(nn.Module):
             should_return_arrays = is_last_epoch and track
             val_accuracy, val_loss, y_true_epoch, y_pred_epoch = self.evaluate(val_loader, device=device, return_arrays=should_return_arrays)
             
-            scheduler.step(val_loss)
+            scheduler.step()
             
             train_loss_history.append(epoch_loss)
             val_loss_history.append(val_loss)
