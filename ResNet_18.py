@@ -65,7 +65,7 @@ class ResidualBlock(nn.Module):
             layers.append(nn.Conv2d(current_in, out_features, kernel_size=3, stride=layer_stride, padding=1, bias=False))
             layers.append(BatchNorm(out_features))
             if i < num_layers - 1:
-                layers.append(self.activation())
+                layers.append(self.activation)
             current_in = out_features
         
         self.conv_path = nn.Sequential(*layers)
@@ -112,7 +112,7 @@ class ResNet_18(nn.Module):
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
         super().__init__()
         self.leaky = leaky
-        self.activation = LeakyReLU if leaky else ReLU
+        self.activation = LeakyReLU() if leaky else ReLU()
         
         self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
         self.norm1 = BatchNorm(64)

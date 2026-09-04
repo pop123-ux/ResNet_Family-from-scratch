@@ -106,7 +106,7 @@ class ResNet_12(nn.Module):
     def __init__(self, in_channels: int = 1, num_classes: int = 96, leaky: bool = False):
         super().__init__()
         self.leaky = leaky
-        self.activation = LeakyReLU if leaky else ReLU
+        self.activation = LeakyReLU() if leaky else ReLU()
         
         self.c1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False)
         self.norm1 = BatchNorm(64)
