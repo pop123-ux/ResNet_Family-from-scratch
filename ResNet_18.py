@@ -222,7 +222,7 @@ class ResNet_18(nn.Module):
             
             is_last_epoch = (epoch == epochs - 1)
             should_return_arrays = is_last_epoch and track
-            val_accuracy, val_loss, y_true_epoch, y_pred_epoch = self.eval(val_loader, device=device, return_arrays=should_return_arrays)
+            val_accuracy, val_loss, y_true_epoch, y_pred_epoch = self.evaluate(val_loader, device=device, return_arrays=should_return_arrays)
             
             scheduler.step(val_loss)
             
@@ -238,7 +238,7 @@ class ResNet_18(nn.Module):
             
             
     
-    def eval(self, val_loader, device=None, verbose=False, return_arrays=False):
+    def evaluate(self, val_loader, device=None, verbose=False, return_arrays=False):
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
