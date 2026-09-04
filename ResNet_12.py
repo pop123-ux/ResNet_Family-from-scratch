@@ -175,7 +175,7 @@ class ResNet_12(nn.Module):
             running_loss = 0.
             for batch_idx, (inputs, labels) in enumerate(train_loader):
                 inputs, labels = inputs.to(device), labels.to(device)
-                optimizer.zero_grad                
+                optimizer.zero_grad()                
                 outputs = self(inputs)
                 
                 loss = crit(outputs, labels)
@@ -193,7 +193,7 @@ class ResNet_12(nn.Module):
             
             is_last_epoch = (epoch == epochs - 1)
             should_return_arrays = is_last_epoch and track
-            val_accuracy, val_loss, y_true_epoch, y_pred_epoch = eval(val_loader, device=device, return_arrays=should_return_arrays)
+            val_accuracy, val_loss, y_true_epoch, y_pred_epoch = self.eval(val_loader, device=device, return_arrays=should_return_arrays)
             
             scheduler.step()
             
