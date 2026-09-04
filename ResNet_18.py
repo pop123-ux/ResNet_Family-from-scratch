@@ -114,11 +114,11 @@ class ResNet_18(nn.Module):
         self.leaky = leaky
         self.activation = LeakyReLU() if leaky else ReLU()
         
-        self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=7, stride=1, padding=3, bias=False)
         self.norm1 = BatchNorm(64)
         
         # Initial Max Pooling (3x3, stride=2)
-        self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         
         # Layer 1 - Resolution [100, 100]
         # 4 identical 3x3 conv layers split into 2 blocks of 2 layers each
