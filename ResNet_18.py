@@ -141,7 +141,7 @@ class ResNet_18(nn.Module):
         self.layer4_identical = ResidualBlock(512, 512, stride=1, num_layers=3, leaky=self.leaky)
         
         # Global Average Pooling (5x5 spatial size -> 1x1)
-        self.avgpool2 = nn.AvgPool2d(kernel_size=5)
+        self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
         
         self.fc10 = nn.Linear(in_features=512*1*1, out_features=num_classes)
         
