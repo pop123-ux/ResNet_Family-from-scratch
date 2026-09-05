@@ -126,7 +126,7 @@ class ResNet_34(nn.Module):
            
            # Final Resolution - [7, 7]
            
-           # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 14x14 spatial size -> 1x1 vector
+           # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 7x7 spatial size -> 1x1 vector
            self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
            
            self.fc34 = nn.Linear(512*1*1, num_classes)
