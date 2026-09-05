@@ -10,7 +10,7 @@ class BatchNorm(nn.Module):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, device=None):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(num_features))
-        self.bias = nn.Parameter(torch.ones(num_features))
+        self.bias = nn.Parameter(torch.zeros(num_features))
         
         self.eps = eps
         self.momentum = momentum
@@ -84,6 +84,12 @@ class ResidualBlock(nn.Module):
     
 class ResNet_34(nn.Module):
         """"""
+        DEFAULT_WEIGHTS = (
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet34_model.pth')
+        if '__file__' in locals()
+        else 'ResNet34_model.pth'
+        )
+        
         def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
            super().__init__()
            self.leaky = leaky
@@ -131,6 +137,7 @@ class ResNet_34(nn.Module):
            
            self.fc34 = nn.Linear(512*1*1, num_classes)
            
+        
         def forward(self, x: torch.Tensor) -> torch.Tensor:
             x = self.activation(self.norm1(self.c1(x)))
             
@@ -196,6 +203,8 @@ class ResNet_34(nn.Module):
             for epoch in range(epochs):
                 self.train()
                 running_loss = 0.
+                current_lr = optimizer.param_groups[0]['lr']
+                
                 for batch_idx, (inputs, labels) in enumerate(train_loader):
                     inputs, labels = inputs.to(device), labels.to(device)
                     optimizer.zero_grad()                
@@ -208,7 +217,6 @@ class ResNet_34(nn.Module):
                     
                     running_loss += loss.item()
     
-                    current_lr = scheduler.get_last_lr()[0]
                     if batch_idx % 100 == 0:
                         print(f"Epoch: {epoch+1} | Lr: {current_lr} | Batch: {batch_idx:03d} | Batch Loss {loss.item():.4f}")
                         
@@ -275,8 +283,6 @@ class ResNet_34(nn.Module):
                     print(f"Correct predictions: {correct}")
                 
                 return accuracy, avg_val_loss, y_true, y_pred
-        
-        DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet34_model.pth')
         
         """Load model class method"""
         def load(self, path=None, device=None):

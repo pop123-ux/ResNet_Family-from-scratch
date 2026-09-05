@@ -10,7 +10,7 @@ class BatchNorm(nn.Module):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, device=None):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(num_features))
-        self.bias = nn.Parameter(torch.ones(num_features))
+        self.bias = nn.Parameter(torch.zeros(num_features))
         
         self.eps = eps
         self.momentum = momentum
@@ -109,6 +109,12 @@ class ResNet_18(nn.Module):
     - GAP behaves as a robust spatial regularizer. By averaging out the final 5x5 feature plane down to 1x1, it enforces translation invariance and heavily reduces the parameter footprint of the classifier head, drastically minimizing overfitting compared to flattening a 5x5x512 matrix directly into a massive linear layer.
     - Extra: When a BatchNorm layer immediately follows a convolutional layer, the convolutional bias parameter b becomes completely redundant. Adding a static bias b simply shifts the distribution's mean by that exact amount b. When BatchNorm computes the new mean and subtracts it, the bias b cancels out perfectly. Setting bias=False ensures the model does not waste VRAM or training time updating useless parameters
     """
+    DEFAULT_WEIGHTS = (
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
+                if '__file__' in locals()
+                else 'ResNet18_model.pth'
+    )
+    
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
         super().__init__()
         self.leaky = leaky
@@ -282,8 +288,7 @@ class ResNet_18(nn.Module):
                 print(f"Correct predictions: {correct}")
             
             return accuracy, avg_val_loss, y_true, y_pred
-    
-    DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
+        
     
     """Load model class method"""
     def load(self, path=None, device=None):

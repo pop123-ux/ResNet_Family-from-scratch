@@ -103,6 +103,11 @@ class ResNet_12(nn.Module):
     - Stacking 10 convolutional layers inside the residual blocks allows the network to learn intricate hierarchical transformations. Since each block bypasses its original input via a shortcut line, gradients can flow backwards unimpeded during training, preventing the vanishing gradient problem
     - GAP behaves as a robust spatial regularizer. By averaging out the entire 2x24 feature plane down to 1x1, it makes the network invariant to translation shifts in the input matrix and havily discourages overfitting compared to flattening a whole matrix directly into an expensive linear layer.
     """
+    DEFAULT_WEIGHTS = (
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet12_model.pth')
+            if '__file__' in locals()
+            else 'ResNet12_model.pth'
+    )
     def __init__(self, in_channels: int = 1, num_classes: int = 96, leaky: bool = False):
         super().__init__()
         self.leaky = leaky
