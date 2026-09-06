@@ -94,27 +94,26 @@ class ResNet_18(nn.Module):
     Layer Breakdown:
     
     1. Input: 3x100x100 feature matrix w/ 3 channels (e.g., standard RGB image)
-    2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 1, pad 3, output size 64x100x100
-    3. S2 (MaxPool): 3x3 window, stride 1, pad 1, output size 64x100x100 # Maintains high spatial resolution early to preserve fine-grained structural details
-    4. ResNet Layer-1 (C3, C4, C5, C6): Four 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x100x100 w/ identity skip connections
-    5. ResNet Layer-2 (C7, C8, C9, C10): Four 3x3 conv layers, 128 feature maps, transition stride 2, pad 1, output size 128x50x50 w/ projection skip connections
-    6. ResNet Layer-3 (C11, C12, C13, C14): Four 3x3 conv layers, 256 feature maps, transition stride 2, pad 1, output size 256x25x25 w/ projection skip connections
-    7. ResNet Layer-4 (C15, C16, C17, C18): Four conv layers, 512 feature maps, transition block uses a customized 5x5 filter w/ stride 5 and pad 0, output size 512x5x5 w/ projection skip connections
-    8. GAP (Global Average Pooling): 5x5 kernel size, output size 512x1x1 # Collapses all spatial elements per channel into a single mean value
-    9. F10 (Fully Connected Layer): Custom output neurons (will implement nn.Flatten -> 512 connected to target classification classes)
+    2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 2, pad 3, output size 64x50x50
+    3. S2 (MaxPool): 3x3 window, stride 2, pad 1, output size 64x25x25 # Maintains high spatial resolution early to preserve fine-grained structural details
+    4. ResNet Layer-1 (C3-C6): Four 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x25x25 w/ identity skip connections
+    5. ResNet Layer-2 (C7-C10): Four 3x3 conv layers, 128 feature maps, transition stride 2 downsamples to 12x12 (1 downsample block of 1 layer + 1 block of 3 layers), output size 128x12x12 w/ projection skip connections
+    6. ResNet Layer-3 (C11-C14): Four 3x3 conv layers, 256 feature maps, transition stride 2 downsamples to 6x6 (1 downsample block of 1 layer + 1 block of 3 layers), output size 256x6x6 w/ projection skip connections
+    7. ResNet Layer-4 (C15-C18): Four conv layers, 512 feature maps, transition stride 5 downsamples to 1x1 (1 downsample block of 1 layer + 1 block of 3 layers), output size 512x1x1 w/ projection skip connections
+    8. GAP (Global Average Pooling): 5x5 kernel size applied to 1x1 feature map resulting in output size 512x1x1 # Collapses all spatial elements per channel into a single mean value
+    9. F10 (Fully Connected Layer): Custom output neurons (will implement torch.flatten in the forward pass -> 512 connected to target classification classes)
     
     Notes taken while writing this Layer Breakdown:
-    - In contrast to other ResNet architectures that use aggressive stride=2 in both the initial convolution and the MaxPool layers (which would immediately crush a 100x100 input down to 25x25), this custom variant maintains a full 100x100 spatial resolution through Layer-1 to allow deeper representation learning on smaller input sizes.
-    - Because a standard 3x3 convolution with stride=2 applied to a 25x25 matrix results in a non-integer fraction rounded down to 12x12 (due to PyTorch's floor operation), the transition block in Layer-4 is explicitly designed w/ a 5x5 kernel, stride=5, and padding=0. This geometric configuration perfectly scales the spatial grid down from 25x25 to an exact 5x5 output.
+    - I decided to go on a different route like I did with ResNet_12; this class deviated from standard ResNet-18 architecture; instead of matching block counts (2+2+2+2), it implements an asymmetric configuration of (2+2), (1+3), (1+3), and (1+3) layers across its main residual segments to total exactly 16 convolutional layers inside the residual blocks.
+    - Because a standard 3x3 convolution with stride=2 applied to a 25x25 matrix results in a non-integer fraction rounded down to 12x12 (due to PyTorch's floor operation), the subsequent dimensions scale from 25x25 -> 12x12 -> 6x6. Layer-4's downsampling block uses a stride=5 which reduces the 6x6 feature space down to 1x1 before passing to the classifier.
     - GAP behaves as a robust spatial regularizer. By averaging out the final 5x5 feature plane down to 1x1, it enforces translation invariance and heavily reduces the parameter footprint of the classifier head, drastically minimizing overfitting compared to flattening a 5x5x512 matrix directly into a massive linear layer.
     - Extra: When a BatchNorm layer immediately follows a convolutional layer, the convolutional bias parameter b becomes completely redundant. Adding a static bias b simply shifts the distribution's mean by that exact amount b. When BatchNorm computes the new mean and subtracts it, the bias b cancels out perfectly. Setting bias=False ensures the model does not waste VRAM or training time updating useless parameters
     """
     DEFAULT_WEIGHTS = (
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
-                if '__file__' in locals()
-                else 'ResNet18_model.pth'
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
+    if '__file__' in locals()
+    else 'ResNet18_model.pth'
     )
-    
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
         super().__init__()
         self.leaky = leaky

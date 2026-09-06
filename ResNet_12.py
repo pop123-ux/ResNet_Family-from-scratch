@@ -104,9 +104,9 @@ class ResNet_12(nn.Module):
     - GAP behaves as a robust spatial regularizer. By averaging out the entire 2x24 feature plane down to 1x1, it makes the network invariant to translation shifts in the input matrix and havily discourages overfitting compared to flattening a whole matrix directly into an expensive linear layer.
     """
     DEFAULT_WEIGHTS = (
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet12_model.pth')
-            if '__file__' in locals()
-            else 'ResNet12_model.pth'
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet12_model.pth')
+    if '__file__' in locals()
+    else 'ResNet12_model.pth'
     )
     def __init__(self, in_channels: int = 1, num_classes: int = 96, leaky: bool = False):
         super().__init__()
@@ -258,7 +258,6 @@ class ResNet_12(nn.Module):
             
             return accuracy, avg_val_loss, y_true, y_pred
     
-    DEFAULT_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet12_model.pth')
     
     """Load model class method"""
     def load(self, path=None, device=None):
