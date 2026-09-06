@@ -83,13 +83,33 @@ class ResidualBlock(nn.Module):
         return self.activation((x + identity))
     
 class ResNet_34(nn.Module):
-        """"""
+        """ResNet_34 model architecture in pure PyTorch.
+        
+        It contains 34 layers in total: 1 initial convolutional (stem) layer, 1 initial max pooling layer,
+        followed by 4 residual layers (divided into 16 residual blocks containing 2 conv layers each, totaling 32 conv layers),
+        1 global average pooling layer, and 1 final fully connected layer.
+        The network is optimized for square 2D matrices (As ResNet_18 & ResNet_50 implementations), adapted to process intermediate spatial scales w/o overly aggressive early downsampling.
+        
+        Layer Breakdown:
+        
+        1. Input: 3x224x224 feature matrix w/ 3 channels (e.g., standard RGB image)
+        2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 2, pad 3
+        3. S2 (MaxPool): 3x3 window, stride 2, pad 1
+        4. ResNet Layer-1 (C3-C8): Six conv layers (3 blocks of 2 layers each)
+        5. ResNet Layer-2 (C9-C16): Eight conv layers (1 downsampling block + 3 identity blocks of 2 layers each)
+        6. ResNet Layer-3 (C17-C28): Twelve conv layers (1 downsampling block + 5 identity blocks of 2 layers each)
+        7. ResNet Layer-4 (C29-C34): Six conv layers (1 downsampling block + 2 identity blocks of 2 layers each)
+        8. GAP (Global Average Pooling): Here implemented as the modern Adaptive Pooling Layer, collapses all spatial elements per channel into a single mean value
+        9. F34 (Fully Connected Layer): Custom output neurons (will implement torch.flatten in the forward pass -> 512 connected to target classification labels)
+        
+        Notes taken while writing this Layer Breakdown:
+        - In contrast to deeper versions like ResNet-50, this architecture uses basic residual blocks consisting of two 3x3 convolutional layers instead of bottleneck designs, striking a balance between representational capacity and parameter efficiency.
+        """
         DEFAULT_WEIGHTS = (
         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet34_model.pth')
         if '__file__' in locals()
         else 'ResNet34_model.pth'
         )
-        
         def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
            super().__init__()
            self.leaky = leaky
@@ -132,7 +152,7 @@ class ResNet_34(nn.Module):
            
            # Final Resolution - [7, 7]
            
-           # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 14x14 spatial size -> 1x1 vector
+           # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 7x7 spatial size -> 1x1 vector
            self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
            
            self.fc34 = nn.Linear(512*1*1, num_classes)
