@@ -1,0 +1,29 @@
+[project]
+name = "ResNet_Family-from-scratch"
+version = "0.1.0"
+description = "Residual Connection Model family training environment with PyTorch and Jupyter"
+requires-python = ">=3.9"
+# Core - The models training only needs torch & torchvision
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "scikit-learn>=1.2",
+    "pandas>=2.0",
+    "jupyter>=1.0",
+]
+
+# Tool-specific configuration for uv to automate the CUDA build
+[[tool.uv.index]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cuda" }
+torchvision = { index = "pytorch-cuda" }
