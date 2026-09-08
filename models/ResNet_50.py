@@ -63,7 +63,7 @@ class ResidualBlock(nn.Module):
         # Final dimension is always 4x base_features
         out_features = 4 * base_features
         
-        # 1x1 Compression layer
+        # 1x1 bottleneck projection/reduction layer
         self.conv1 = nn.Conv2d(in_features, base_features, kernel_size=1, bias=False)
         self.bn1 = BatchNorm(base_features)
         
@@ -75,7 +75,7 @@ class ResidualBlock(nn.Module):
         self.conv3 = nn.Conv2d(base_features, out_features, kernel_size=1, bias=False)
         self.bn3 = BatchNorm(out_features)
         
-        # Adaptive Skip-Connection (adjusts shape if spatial dimension drops)
+        # # Projection shortcut used when spatial or channel dimensions change (adjusts shape if spatial dimension drops)
         self.shortcut = nn.Sequential()
         if stride != 1 or in_features != out_features:
             self.shortcut = nn.Sequential(
@@ -94,27 +94,28 @@ class ResidualBlock(nn.Module):
 class ResNet_50(nn.Module):
     """ResNet_50 model architecture in pure PyTorch.
     
-    It contains 50 layers in total: 1 initial convolutional (stem) layer, 1 initial max pooling layern
-    followed by 4 residual blocks (containing different shapes and layer sizes, totaling 48 conv layers),
-    1 global average pooling layer, and 1 final fully connected layer.
-    The network is optimized for square 2D matrices (As ResNet_18 & Resnet_34 implementations), adapted to process intermediate spatial scaled w/o overly aggressive early downsampling.
+    It contains 50 trainable layers in total: 1 initial convolutional stem layer,
+    followed by 4 residual stages containing 16 bottleneck blocks arranged as [3, 4, 6, 3].
+    Each bottleneck contains 3 convolutional layers, totaling 48 residual-path convolutions.
+    The network ends with global average pooling and 1 fully connected classification layer.
+    
+    Max pooling and global average pooling are not included in the conventional 50-layer count.
     
     Layer Breakdown:
     
     1. Input: 3x224x224 feature matrix w/ 3 channels (e.g, standard RGB image)
     2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 2, pad 3
     3. S2 (MaxPool): 3x3 window, stride 2, pad 1
-    4. ResNet Layer-1 (C3-C11): Nine conv layers
-    5. ResNet Layer-2 (C12-C23): Twelve conv layers
-    6. ResNet Layer-3 (C24-C41): Eighteen conv layers
-    7. ResNet Layer-4 (C42-C50): Nine conv layers
+    4. ResNet Layer-1 (C2-10): Nine conv layers
+    5. ResNet Layer-2 (C11-22): Twelve conv layers
+    6. ResNet Layer-3 (C23-40): Eighteen conv layers
+    7. ResNet Layer-4 (C41-49): Nine conv layers
     8. GAP (Global Average Pooling): Here implemented as the modern Adaptive Pooling Layer, collapses all spatial elements per channel into a single mean value
     9. F50 (Fully Connected Layer): Custom output neurons (will implement torch.flatten in the forward pass -> 2048 connected to target classification labels)
     
     Notes taken while writing this Layer Breakdown:
-    - In contrast to other ResNet architectures, this scaled version I could say, implements a more complex residual layer (having 3 convolutional layers each) with different kernel sizes, extracting more complex spatial information at the expense of compute
+    - In contrast to other ResNet architectures, it implements a more complex residual layer (having 3 convolutional layers each) with different kernel sizes, extracting more complex spatial information at the expense of compute
     - This architecture introduces a 3-layer "bottleneck" design per residual block (using 1x1, 3x3, and 1x1 convolutions). The initial 1x1 convolution reduces dimensionality, the 3x3 convolution operated on a smaller channel volume, and the final 1x1 convolution restores the high-dimensional projection, significantly limiting parameter explosion while deepening the model. 
-    - Definetely not an easy piece to train at this layer scale :)
     """
     
     DEFAULT_WEIGHTS = (
@@ -137,20 +138,20 @@ class ResNet_50(nn.Module):
         # --- Each sublayer will be the same 3-layer sequence: Conv2d_1(1x1) -> BatchNorm1 -> Conv2d_2(3x3) -> BatchNorm2 -> Conv2d_3(1x1) -> BatchNorm3 ---
         
         # ResNet Layer-1 - Output Shape: 56x56x256
-        # 3 sublayers x 3 = 9 total convolutions
+        # 3 bottleneck blocks x 3 convolutions = 9 convolutions
         self.layer1_1 = ResidualBlock(in_features=64, base_features=64, stride=1, leaky=leaky)
         self.layer1_2 = ResidualBlock(in_features=256, base_features=64, stride=1, leaky=leaky)
         self.layer1_3 = ResidualBlock(in_features=256, base_features=64, stride=1, leaky=leaky)
         
         # ResNet Layer-2 - Output Shape: 28x28x512
-        # 4 sublayers x 3 = 12 total convolutions
+        # 4 bottleneck blocks × 3 = 12
         self.layer2_1 = ResidualBlock(in_features=256, base_features=128, stride=2, leaky=leaky)
         self.layer2_2 = ResidualBlock(in_features=512, base_features=128, stride=1, leaky=leaky)
         self.layer2_3 = ResidualBlock(in_features=512, base_features=128, stride=1, leaky=leaky)
         self.layer2_4 = ResidualBlock(in_features=512, base_features=128, stride=1, leaky=leaky)
         
         # ResNet Layer-3 - Output Shape: 14x14x1024
-        # 6 sublayers x 3 = 18 total convolutions
+        # 6 bottleneck blocks × 3 = 18
         self.layer3_1 = ResidualBlock(in_features=512, base_features=256, stride=2, leaky=leaky)
         self.layer3_2 = ResidualBlock(in_features=1024, base_features=256, stride=1, leaky=leaky)
         self.layer3_3 = ResidualBlock(in_features=1024, base_features=256, stride=1, leaky=leaky)
@@ -159,7 +160,7 @@ class ResNet_50(nn.Module):
         self.layer3_6 = ResidualBlock(in_features=1024, base_features=256, stride=1, leaky=leaky)
         
         # ResNet Layer-4 - Output Shape: 7x7x2048
-        # 3 sublayers x 3 = 9 total convolutions
+        # 3 bottleneck blocks × 3 = 9
         self.layer4_1 = ResidualBlock(in_features=1024, base_features=512, stride=2, leaky=leaky)
         self.layer4_2 = ResidualBlock(in_features=2048, base_features=512, stride=1, leaky=leaky)
         self.layer4_3 = ResidualBlock(in_features=2048, base_features=512, stride=1, leaky=leaky)
