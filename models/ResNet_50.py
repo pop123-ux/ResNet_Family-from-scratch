@@ -172,7 +172,7 @@ class ResNet_50(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         # Stem Execution
-        x = self.activation(self.norm1(self.c1(x))
+        x = self.activation(self.norm1(self.c1(x)))
         x = self.maxpool1(x) # stride 2
         
         # Layer 1: 3 total residual blocks w/ 3 layers each
