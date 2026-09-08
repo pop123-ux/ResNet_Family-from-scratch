@@ -14,8 +14,8 @@ class BatchNorm(nn.Module):
         self.eps = eps
         self.momentum = momentum
         
-        self.weight = nn.Parameter(torch.ones(num_features))
-        self.bias = nn.Parameter(torch.zeros(num_features))
+        self.weight = nn.Parameter(torch.ones(num_features)) # gamma γ
+        self.bias = nn.Parameter(torch.zeros(num_features)) # beta β
         
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
