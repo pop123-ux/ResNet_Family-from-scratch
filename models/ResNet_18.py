@@ -29,9 +29,14 @@ class BatchNorm(nn.Module):
             var = x.var(dim=(0, 2, 3), unbiased=False) # Var on axes: [B, H, W]
             
             with torch.no_grad():
+                running_var_batch = x.var(
+                dim=(0, 2, 3),
+                unbiased=True,
+                )
+                
                 # Exponential Moving Average - The Network memorizes the data global statistic in order to use it in the inference stage
                 self.running_mean = (1 - self.momentum) * self.running_mean  + self.momentum * mean
-                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
+                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * running_var_batch
                 
         else:
             mean = self.running_mean
@@ -194,8 +199,8 @@ class ResNet_18(nn.Module):
         
         crit = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
-        # Learning rate downscaled 10x at epochs 30, 60, 90
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
+        # Learning rate downscaled 10x at epochs 10, 20, 25
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 25], gamma=0.1)
         train_loss_history = []
         val_loss_history = []
         
