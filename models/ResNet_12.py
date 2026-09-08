@@ -31,7 +31,7 @@ class BatchNorm(nn.Module):
         if self.training:
             # The result will be a vector of dimension [Channels]
             mean = x.mean(dim=(0, 2, 3)) # Mean on axes: 0 (Batch), 2 (Height), 3 (Width)
-            var = x.var(dim=(0, 2, 3), unbiased=False) # Var on aexes: 0 (Batch), 2 (Height), 3 (Width)
+            var = x.var(dim=(0, 2, 3), unbiased=False) # Variance over axes: 0 (Batch), 2 (Height), 3 (Width)
             
             with torch.no_grad():
                 running_var_batch = x.var(
@@ -88,6 +88,7 @@ class ResNet_12(nn.Module):
     It contains 12 trainable layers in total: 1 initial convolutional layer,
     followed by 5 residual blocks containing 2 convolutional layers each (10 conv layers total),
     and 1 final fully connected classification layer.
+    
     Max pooling and adaptive global average pooling are used as non-parametric operations.
     
     Layer Breakdown:
@@ -107,7 +108,7 @@ class ResNet_12(nn.Module):
     - In contrast to standard few-shot ResNet-12 architectures that increase feature map depth (e.g, 64 -> 160 -> 320 -> 640), this custom variant maintains a constant depth of 64 channels across all 5 blocks, which keeps the total parameter footprint exceptionally lightweight.
     - Because the spatial dimensions become highly compressed (2x24) right after the initial MaxPool layer, the 5 consecutive ResNet blocks use padding=1 and stride=1. This geometric trick acts to preserve the remaining structural matrix completely intact, allowing deep information extraction w/o losing coordinates before the final pool.
     - Stacking 10 convolutional layers inside the residual blocks allows the network to learn intricate hierarchical transformations. Since each block bypasses its original input via a shortcut line, gradients can flow backwards unimpeded during training, preventing the vanishing gradient problem
-    - GAP behaves as a robust spatial regularizer. By averaging out the entire 2x24 feature plane down to 1x1, it makes the network invariant to translation shifts in the input matrix and havily discourages overfitting compared to flattening a whole matrix directly into an expensive linear layer.
+    - GAP reduces sensitivity to exact spatial locations and greatly reduces the classifier parameter count, providing a useful regularizing effect.
     """
     
     DEFAULT_WEIGHTS = (
