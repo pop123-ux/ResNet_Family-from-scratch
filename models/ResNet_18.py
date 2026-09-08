@@ -25,7 +25,8 @@ class BatchNorm(nn.Module):
         
         if self.training:
             mean = x.mean(dim=(0, 2, 3)) # Mean on axes: [B, H, W]
-            # PyTorch uses unbiased=False implicitly for BatchNorm in running stats
+            # Current-batch normalization uses the biased variance estimate (unbiased=False);
+            # running_var is updated below using the unbiased variance estimate
             var = x.var(dim=(0, 2, 3), unbiased=False) # Var on axes: [B, H, W]
             
             with torch.no_grad():
@@ -140,21 +141,21 @@ class ResNet_18(nn.Module):
         self.layer1_block2 = ResidualBlock(64, 64, stride=1, num_layers=2, leaky=self.leaky)
         
         # Layer 2 - Resolution [50, 50] (stride=2 halves 100x100)
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling residual block followed by 1 identity residual block
         self.layer2_downsample = ResidualBlock(64, 128, stride=2, num_layers=2, leaky=self.leaky)
         self.layer2_identical = ResidualBlock(128, 128, stride=1, num_layers=2, leaky=self.leaky)
         
         # Layer 3 - Shape [25, 25] (stride=2 halves 50x50)
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling residual block followed by 1 identity residual block
         self.layer3_downsample = ResidualBlock(128, 256, stride=2, num_layers=2, leaky=self.leaky)
         self.layer3_identical = ResidualBlock(256, 256, stride=1, num_layers=2, leaky=self.leaky)
         
         # Layer 4 - Shape [5, 5] (stride=5 reduces 25x25 down to 5x5)
-        # 1 downsampling layer followed by 2 identical layers
+        # 1 downsampling residual block followed by 1 identity residual block
         self.layer4_downsample = ResidualBlock(256, 512, stride=5, num_layers=2, leaky=self.leaky)
         self.layer4_identical = ResidualBlock(512, 512, stride=1, num_layers=2, leaky=self.leaky)
         
-        # Global Average Pooling (5x5 spatial size -> 1x1)
+        # For the intended 100x100 input, the final 5x5 feature map is globally averaged to 1x1
         self.avgpool2 = nn.AvgPool2d(kernel_size=5)
         
         self.fc10 = nn.Linear(in_features=512*1*1, out_features=num_classes)
