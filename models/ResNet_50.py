@@ -30,8 +30,13 @@ class BatchNorm(nn.Module):
             var = x.var(dim=(0, 2, 3), unbiased=False) # Var on axes: [B, H, W]
             
             with torch.no_grad():
+                running_var_batch = x.var(
+                dim=(0, 2, 3),
+                unbiased=True,
+                )
+                
                 self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
-                self.running_var = (1 - self.momentum) * self.running_mean + self.momentum * var
+                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * running_var_batch
                 
         else:
             # Use the variables that don't update gradients
@@ -80,9 +85,9 @@ class ResidualBlock(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = self.shortcut(x)
         
-        x = self.activation(self.bn1(self.conv1(x))
-        x = self.activation(self.bn2(self.conv2(x))
-        x = self.bn3(self.conv3(x)
+        x = self.activation(self.bn1(self.conv1(x)))
+        x = self.activation(self.bn2(self.conv2(x)))
+        x = self.bn3(self.conv3(x))
         
         return self.activation(x + identity)
     
@@ -226,8 +231,8 @@ class ResNet_50(nn.Module):
         
         crit = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
-        # Learning rate downscaled 10x at epochs 30, 60, 90
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
+        # Learning rate downscaled 10x at epochs 10, 20, 25
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 25], gamma=0.1)
         train_loss_history = []
         val_loss_history = []
         
