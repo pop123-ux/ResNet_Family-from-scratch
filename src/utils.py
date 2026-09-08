@@ -7,10 +7,10 @@ class ReLU(nn.Module):
         super().__init__()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.clamp(x, min=0) # Fixes the minimum value to 0
+        return torch.clamp(x, min=0) ## Clamps all negative values to 0
 
 class LeakyReLU(nn.Module):
-    """Also implemented the LeakyReLU from Scratch"""
+    """LeakyReLU activation implemented from scratch."""
     def __init__(self, negative_slope: float = 0.01):
         super().__init__()
         self.negative_slope = negative_slope
