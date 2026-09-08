@@ -129,20 +129,20 @@ class ResNet_34(nn.Module):
            # Initial Max Pooling (3x3)
            self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1) 
 
-           # ResNet Layer-1 - Resolution [112, 112]
+           # ResNet Layer-1 - Resolution [56, 56]
            # 6 identical 3x3 conv layers split into 3 blocks of 2 layers each (violet) -> 3 total blocks of 2 layers each
            self.layer1_1 = ResidualBlock(in_features=64, out_features=64, stride=1, num_layers=2, leaky=leaky)
            self.layer1_2 = ResidualBlock(in_features=64, out_features=64, stride=1, num_layers=2, leaky=leaky)
            self.layer1_3 = ResidualBlock(in_features=64, out_features=64, stride=1, num_layers=2, leaky=leaky)
            
-           # ResNet Layer-2 - Resolution [56, 56]
+           # ResNet Layer-2 - Resolution [28, 28]
            # 1 downsampling layer followed by 7 identical layers -> 4 total blocks of 2 layers each
            self.layer2_downsample = ResidualBlock(in_features=64, out_features=128, stride=2, num_layers=2, leaky=leaky)
            self.layer2_1 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
            self.layer2_2 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
            self.layer2_3 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
 
-           # ResNet Layer-3 - Resolution [28, 28]
+           # ResNet Layer-3 - Resolution [14, 14]
            # 1 downsampling layer followed by 11 identical layers -> 6 total blocks of 2 layers each
            self.layer3_downsample = ResidualBlock(in_features=128, out_features=256, stride=2, num_layers=2, leaky=leaky)
            self.layer3_1 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
@@ -150,14 +150,12 @@ class ResNet_34(nn.Module):
            self.layer3_3 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
            self.layer3_4 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
            self.layer3_5 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
-           
-           # ResNet Layer-4 - Resolution [14, 14]
+
+           # Resnet Layer-4 - Resolution [7, 7]
            # 1 downsampling layer followed by 5 identical layers
            self.layer4_downsample = ResidualBlock(in_features=256, out_features=512, stride=2, num_layers=2, leaky=leaky)
            self.layer4_1 = ResidualBlock(in_features=512, out_features=512, stride=1, num_layers=2, leaky=leaky)
            self.layer4_2 = ResidualBlock(in_features=512, out_features=512, stride=1, num_layers=2, leaky=leaky)
-           
-           # Final Resolution - [7, 7]
            
            # GAP (Global Average Pooling - Calculates the average of all pixels in each channel) - 7x7 spatial size -> 1x1 vector
            self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
@@ -201,7 +199,7 @@ class ResNet_34(nn.Module):
             
             return x
         
-        """Returns the total number of parameters of ResNet_18"""
+        """Returns the total number of parameters of ResNet_34"""
         def params(self):
             return sum(p.numel() for p in self.parameters())
         
@@ -217,7 +215,7 @@ class ResNet_34(nn.Module):
             crit = nn.CrossEntropyLoss()
             optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
             # Learning rate dynamic 10x downscaling
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[epochs*1/3, epochs*2/3, epochs*2.5/3], gamma=0.1)
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[epochs//3, 2*epochs//3, 5*epochs//6], gamma=0.1)
             train_loss_history = []
             val_loss_history = []
             
