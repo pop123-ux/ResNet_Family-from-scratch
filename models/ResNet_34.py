@@ -90,20 +90,21 @@ class ResidualBlock(nn.Module):
 class ResNet_34(nn.Module):
         """ResNet_34 model architecture in pure PyTorch.
         
-        It contains 34 layers in total: 1 initial convolutional (stem) layer, 1 initial max pooling layer,
-        followed by 4 residual layers (divided into 16 residual blocks containing 2 conv layers each, totaling 32 conv layers),
-        1 global average pooling layer, and 1 final fully connected layer.
-        The network is optimized for square 2D matrices (As ResNet_18 & ResNet_50 implementations), adapted to process intermediate spatial scales w/o overly aggressive early downsampling.
+        It contains 34 trainable layers in total: 1 initial convolutional stem layer,
+        followed by 16 basic residual blocks containing 2 convolutional layers each (32 conv layers total),
+        and 1 final fully connected classification layer.
+        
+        Max pooling and global average pooling are not included in the conventional ResNet layer count.
         
         Layer Breakdown:
         
         1. Input: 3x224x224 feature matrix w/ 3 channels (e.g., standard RGB image)
         2. C1 (Convolution): 7x7 filters, 64 feature maps, stride 2, pad 3
         3. S2 (MaxPool): 3x3 window, stride 2, pad 1
-        4. ResNet Layer-1 (C3-C8): Six conv layers (3 blocks of 2 layers each)
-        5. ResNet Layer-2 (C9-C16): Eight conv layers (1 downsampling block + 3 identity blocks of 2 layers each)
-        6. ResNet Layer-3 (C17-C28): Twelve conv layers (1 downsampling block + 5 identity blocks of 2 layers each)
-        7. ResNet Layer-4 (C29-C34): Six conv layers (1 downsampling block + 2 identity blocks of 2 layers each)
+        4. ResNet Layer-1 (C2-7): Six conv layers (3 blocks of 2 layers each)
+        5. ResNet Layer-2 (C8-15): Eight conv layers (1 downsampling block + 3 identity blocks of 2 layers each)
+        6. ResNet Layer-3 (C16-27): Twelve conv layers (1 downsampling block + 5 identity blocks of 2 layers each)
+        7. ResNet Layer-4 (C28-33): Six conv layers (1 downsampling block + 2 identity blocks of 2 layers each)
         8. GAP (Global Average Pooling): Here implemented as the modern Adaptive Pooling Layer, collapses all spatial elements per channel into a single mean value
         9. F34 (Fully Connected Layer): Custom output neurons (will implement torch.flatten in the forward pass -> 512 connected to target classification labels)
         
@@ -136,14 +137,14 @@ class ResNet_34(nn.Module):
            self.layer1_3 = ResidualBlock(in_features=64, out_features=64, stride=1, num_layers=2, leaky=leaky)
            
            # ResNet Layer-2 - Resolution [28, 28]
-           # 1 downsampling layer followed by 7 identical layers -> 4 total blocks of 2 layers each
+           # 1 downsampling residual block followed by 3 identity residual blocks -> 4 total blocks of 2 layers each
            self.layer2_downsample = ResidualBlock(in_features=64, out_features=128, stride=2, num_layers=2, leaky=leaky)
            self.layer2_1 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
            self.layer2_2 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
            self.layer2_3 = ResidualBlock(in_features=128, out_features=128, stride=1, num_layers=2, leaky=leaky)
 
            # ResNet Layer-3 - Resolution [14, 14]
-           # 1 downsampling layer followed by 11 identical layers -> 6 total blocks of 2 layers each
+           # 1 downsampling residual block followed by 5 identity residual blocks -> 6 total blocks of 2 layers each
            self.layer3_downsample = ResidualBlock(in_features=128, out_features=256, stride=2, num_layers=2, leaky=leaky)
            self.layer3_1 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
            self.layer3_2 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
@@ -152,7 +153,7 @@ class ResNet_34(nn.Module):
            self.layer3_5 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
 
            # Resnet Layer-4 - Resolution [7, 7]
-           # 1 downsampling layer followed by 5 identical layers
+           # 1 downsampling residual block followed by 2 identity residual blocks -> 3 total blocks of 2 layers each
            self.layer4_downsample = ResidualBlock(in_features=256, out_features=512, stride=2, num_layers=2, leaky=leaky)
            self.layer4_1 = ResidualBlock(in_features=512, out_features=512, stride=1, num_layers=2, leaky=leaky)
            self.layer4_2 = ResidualBlock(in_features=512, out_features=512, stride=1, num_layers=2, leaky=leaky)
