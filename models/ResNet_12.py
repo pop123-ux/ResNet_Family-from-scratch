@@ -64,8 +64,8 @@ class ResidualBlock(nn.Module):
         # Since BatchNorm includes learnable parameters, we need to instantiate another instance attribute which is going to be used for the input to the second convolutional layer
         self.norm2 = BatchNorm(num_features)
         
-        self.conv1 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding, bias=False)
-        self.conv2 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=stride, kernel_size=kernel_size, padding=padding, bias=False)
+        self.conv1 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=1, kernel_size=kernel_size, padding=padding, bias=False)
+        self.conv2 = nn.Conv2d(in_channels=num_features, out_channels=num_features, stride=1, kernel_size=kernel_size, padding=padding, bias=False)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = x # Copy of input
