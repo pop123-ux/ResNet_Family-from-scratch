@@ -33,8 +33,13 @@ class BatchNorm(nn.Module):
             var = x.var(dim=(0, 2, 3), unbiased=False) # Var on aexes: 0 (Batch), 2 (Height), 3 (Width)
             
             with torch.no_grad():
+                running_var_batch = x.var(
+                dim=(0, 2, 3),
+                unbiased=True,
+                )
+                
                 self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
-                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var
+                self.running_var = (1 - self.momentum) * self.running_var + self.momentum * running_var_batch
         else:
             # At the inference stage, use use what we learned in the training phase
             mean = self.running_mean
