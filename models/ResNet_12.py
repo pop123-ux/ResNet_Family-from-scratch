@@ -1,4 +1,4 @@
-"""Unofficial ResNet -- the smallest possible architecture I could find"""
+"""Custom lightweight ResNet variant for asymmetric 2D inputs."""
 import time
 import os
 import torch
@@ -16,7 +16,8 @@ class BatchNorm(nn.Module):
         
         self.eps = eps
         self.momentum = momentum
-        # Non-Trainable params for eval stage
+        
+        # Non-trainable running statistics, updated during training and used during evaluation
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
     
@@ -41,7 +42,7 @@ class BatchNorm(nn.Module):
                 self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
                 self.running_var = (1 - self.momentum) * self.running_var + self.momentum * running_var_batch
         else:
-            # At the inference stage, use use what we learned in the training phase
+            # During evaluation, use the running statistics accumulated during training
             mean = self.running_mean
             var = self.running_var
         
@@ -84,23 +85,23 @@ class ResidualBlock(nn.Module):
 class ResNet_12(nn.Module):
     """ResNet_12 model architecture in pure PyTorch.
     
-    It contains 14 layers in total: 1 initial convolutional layer, 1 initial max pooling layer,
-    followed by 5 residual blocks (each containing 2 convolutional layers, totaling 10 conv layers),
-    1 global average pooling layer (part of the latter layers, as was the standard back then), and 1 final fully connected layer.
-    The network is optimized for asymmetric 2D sequential data or spectrograms rather than standard square images.
+    It contains 12 trainable layers in total: 1 initial convolutional layer,
+    followed by 5 residual blocks containing 2 convolutional layers each (10 conv layers total),
+    and 1 final fully connected classification layer.
+    Max pooling and adaptive global average pooling are used as non-parametric operations.
     
     Layer Breakdown:
     
     1. Input: 1x7x96 feature matrix w/ 1 channel (e.g, mono audio spectrogram)
     2. C1 (Convolution): 3x3 filters, 64 feature maps, stride 2, pad 1, output size 64x4x48
     3. S2 (MaxPool): 3x3 window, stride 2, pad 1, output size 64x2x24 # Reduces spatial dimensions early to minimize downstream computation
-    4. ResNet Block-1 (C3, C4): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
-    5. ResNet Block-2 (C5, C6): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
-    6. ResNet Block-3 (C7, C8): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
-    7. ResNet Block-4 (C9, C10): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
-    8. ResNet Block-5 (C11, C12): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
+    4. ResNet Block-1 (C2-3): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
+    5. ResNet Block-2 (C4-5): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
+    6. ResNet Block-3 (C6-7): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
+    7. ResNet Block-4 (C8-9): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
+    8. ResNet Block-5 (C10-11): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
     9. GAP (Global Average Pooling): Adaptive average pooling reduces each 64-channel spatial feature map to 1x1.
-    10. F13 (Fully Connected Layer): 96 output neurons
+    10. F12 (Fully Connected Layer): 96 output neurons
     
     Notes taken while writing this Layer Breakdown:
     - In contrast to standard few-shot ResNet-12 architectures that increase feature map depth (e.g, 64 -> 160 -> 320 -> 640), this custom variant maintains a constant depth of 64 channels across all 5 blocks, which keeps the total parameter footprint exceptionally lightweight.
