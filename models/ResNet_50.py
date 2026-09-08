@@ -116,11 +116,13 @@ class ResNet_50(nn.Module):
     - This architecture introduces a 3-layer "bottleneck" design per residual block (using 1x1, 3x3, and 1x1 convolutions). The initial 1x1 convolution reduces dimensionality, the 3x3 convolution operated on a smaller channel volume, and the final 1x1 convolution restores the high-dimensional projection, significantly limiting parameter explosion while deepening the model. 
     - Definetely not an easy piece to train at this layer scale :)
     """
+    
     DEFAULT_WEIGHTS = (
     os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet50_model.pth')
     if '__file__' in locals()
     else 'ResNet50_model.pth'
     )
+    
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
         super().__init__()
         self.activation = LeakyReLU() if leaky else ReLU()
