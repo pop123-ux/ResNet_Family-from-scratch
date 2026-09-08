@@ -234,7 +234,7 @@ class ResNet_50(nn.Module):
         crit = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
         # Learning rate dynamic 10x downscaling
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[epochs*1/3, epochs*2/3, epochs*2.5/3], gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[epochs//3, 2*epochs//3, 5*epochs//6], gamma=0.1)
         train_loss_history = []
         val_loss_history = []
         
