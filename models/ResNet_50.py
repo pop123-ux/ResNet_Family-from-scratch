@@ -234,6 +234,8 @@ class ResNet_50(nn.Module):
         
         crit = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
+        use_amp = device.type == 'cuda'
+        scaler = torch.amp.GradScaler('cuda', enabled=use_amp)
         # Learning rate dynamic 10x downscaling
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[epochs//3, 2*epochs//3, 5*epochs//6], gamma=0.1)
         train_loss_history = []
@@ -243,6 +245,7 @@ class ResNet_50(nn.Module):
         y_pred_epoch = None
         
         print(f"ResNet_50 training will start on: {device.type.upper()}")
+        print(f"Mixed precision: {'ENABLED' if use_amp else 'DISABLED'}")
         print("=" * 60)
         
         for epoch in range(epochs):
@@ -250,13 +253,15 @@ class ResNet_50(nn.Module):
             running_loss = 0.
             for batch_idx, (inputs, labels) in enumerate(train_loader):
                 inputs, labels = inputs.to(device), labels.to(device)
-                optimizer.zero_grad()                
-                outputs = self(inputs)
+                optimizer.zero_grad(set_to_none=True)
                 
-                loss = crit(outputs, labels)
+                with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+                    outputs = self(inputs)
+                    loss = crit(outputs, labels)
                 
-                loss.backward()
-                optimizer.step()
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
                 
                 running_loss += loss.item()
 
@@ -292,6 +297,7 @@ class ResNet_50(nn.Module):
         
         self.to(device) # Moves the model weights to device
         self.eval()
+        use_amp = device.type == 'cuda'
         
         correct = 0
         total = 0
@@ -305,9 +311,10 @@ class ResNet_50(nn.Module):
         with torch.no_grad():
             for images, labels in val_loader:
                 images, labels = images.to(device), labels.to(device)
-                outputs = self(images)
                 
-                loss = criterion(outputs, labels)
+                with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
+                    outputs = self(images)
+                    loss = criterion(outputs, labels)
                 
                 running_val_loss += loss.item()
                 predicted = torch.argmax(outputs, dim=1)
