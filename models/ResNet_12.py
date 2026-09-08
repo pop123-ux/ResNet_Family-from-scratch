@@ -135,7 +135,7 @@ class ResNet_12(nn.Module):
         
         self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
         
-        self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # # 64x1x1 -> 64 input features
+        self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # 64x1x1 -> 64 input features
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Entry input size: [Batch, 1, 7, 96]
