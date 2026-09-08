@@ -9,6 +9,8 @@ EPOCHS: int = 30
 class BatchNorm(nn.Module):
     # num_features is of size C (Channels)
     def __init__(self, num_features, eps=1e-05, momentum=0.1):
+        super().__init__()
+        
         self.eps = eps
         self.momentum = momentum
         
@@ -18,7 +20,7 @@ class BatchNorm(nn.Module):
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
         
-    def fit(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # [B, C, H, W]
         weight = self.weight.view(1, -1, 1, 1)
         bias = self.bias.view(1, -1, 1, 1)
@@ -28,8 +30,8 @@ class BatchNorm(nn.Module):
             var = x.var(dim=(0, 2, 3), unbiased=False) # Var on axes: [B, H, W]
             
             with torch.no_grad():
-                self.running_mean = (1 - self.mometum) * self.running_mean + self.mometum * mean
-                self.running_var = (1 - self.mometum) * self.running_mean + self.mometum * var
+                self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean
+                self.running_var = (1 - self.momentum) * self.running_mean + self.momentum * var
                 
         else:
             # Use the variables that don't update gradients
@@ -78,9 +80,9 @@ class ResidualBlock(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = self.shortcut(x)
         
-        x = self.activation(self.bn1(self.conv1))
-        x = self.activation(self.bn2(self.conv2))
-        x = self.bn3(self.conv3)
+        x = self.activation(self.bn1(self.conv1(x))
+        x = self.activation(self.bn2(self.conv2(x))
+        x = self.bn3(self.conv3(x)
         
         return self.activation(x + identity)
     
@@ -131,7 +133,7 @@ class ResNet_50(nn.Module):
         # 3 sublayers x 3 = 9 total convolutions
         self.layer1_1 = ResidualBlock(in_features=64, base_features=64, stride=1, leaky=leaky)
         self.layer1_2 = ResidualBlock(in_features=256, base_features=64, stride=1, leaky=leaky)
-        self.layer1_3 = ResidualBlock(in_features=256, base_features=256, stride=1, leaky=leaky)
+        self.layer1_3 = ResidualBlock(in_features=256, base_features=64, stride=1, leaky=leaky)
         
         # ResNet Layer-2 - Output Shape: 28x28x512
         # 4 sublayers x 3 = 12 total convolutions
@@ -160,10 +162,10 @@ class ResNet_50(nn.Module):
         
         self.fc50 = nn.Linear(2048*1*1, num_classes)
     
-    def fit(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         # Stem Execution
-        x = self.activation(self.norm1(self.c1))
+        x = self.activation(self.norm1(self.c1(x))
         x = self.maxpool1(x) # stride 2
         
         # Layer 1: 3 total residual blocks w/ 3 layers each
@@ -206,6 +208,8 @@ class ResNet_50(nn.Module):
         x = self.avgpool2(x) # Input: [B, 2048, 7, 7] -> [B, 2048, 1, 1]
         x = torch.flatten(x, start_dim=1) # Input: [B, 2048, 1, 1] -> [B, 2048] | In [B, C, H, W], C is the dim on pos 1
         x = self.fc50(x) # Input: [B, 2048] -> [B, num_classes]
+
+        return x # Return the final logits
         
     """Returns the total number of parameters of ResNet_50"""
     def params(self):
