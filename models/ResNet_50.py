@@ -75,7 +75,7 @@ class ResidualBlock(nn.Module):
         self.conv3 = nn.Conv2d(base_features, out_features, kernel_size=1, bias=False)
         self.bn3 = BatchNorm(out_features)
         
-        # # Projection shortcut used when spatial or channel dimensions change (adjusts shape if spatial dimension drops)
+        # Projection shortcut used when spatial or channel dimensions change (adjusts shape if spatial dimension drops)
         self.shortcut = nn.Sequential()
         if stride != 1 or in_features != out_features:
             self.shortcut = nn.Sequential(
@@ -114,7 +114,7 @@ class ResNet_50(nn.Module):
     9. F50 (Fully Connected Layer): Custom output neurons (will implement torch.flatten in the forward pass -> 2048 connected to target classification labels)
     
     Notes taken while writing this Layer Breakdown:
-    - In contrast to other ResNet architectures, it implements a more complex residual layer (having 3 convolutional layers each) with different kernel sizes, extracting more complex spatial information at the expense of compute
+    - In contrast to the basic blocks used by ResNet-18 and ResNet-34, ResNet-50 uses 3-layer bottleneck blocks composed of 1x1, 3x3, and 1x1 convolutions.
     - This architecture introduces a 3-layer "bottleneck" design per residual block (using 1x1, 3x3, and 1x1 convolutions). The initial 1x1 convolution reduces dimensionality, the 3x3 convolution operated on a smaller channel volume, and the final 1x1 convolution restores the high-dimensional projection, significantly limiting parameter explosion while deepening the model. 
     """
     
