@@ -113,7 +113,7 @@ class ResNet_12(nn.Module):
         self.leaky = leaky
         self.activation = LeakyReLU() if leaky else ReLU()
         
-        self.c1 = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False)
+        self.c1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=3, stride=2, padding=1, bias=False)
         self.norm1 = BatchNorm(64)
         
         # S2: drops spatial maps from [64, 4, 48] down to [64, 2, 24]
@@ -126,7 +126,7 @@ class ResNet_12(nn.Module):
         self.r4 = ResidualBlock(num_features=64, leaky=self.leaky)
         self.r5 = ResidualBlock(num_features=64, leaky=self.leaky)
         
-        self.avgpool2 = nn.AvgPool2d(kernel_size=(2, 24)) # Alternative: nn.AdaptiveAvgPool2d((1, 1))
+        self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
         
         self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # in_features[C, H, W] = 2072
     
