@@ -1,7 +1,9 @@
-# ResNet_Family-from-scratch in pure PyTorch
+# ResNet_Family-from-scratch in Pure PyTorch
 ![Cool Image of ResNet-50 should be here](IMAGES/The-ResNet-50-architecture.png)
+_The ResNet-50 architecture implemented inside this project_
 
-My working in-depth reimplementation of revolutionary convolutional neural network family that really put to question, how deep can deep neural networks really go. This is the 3rd project from the **Visual Scrambling** series in which I go through the most influential classic architectures, ending with a unique visual model design written and designed by me.
+
+This is my working in-depth reimplementation of revolutionary convolutional neural network family that really put to question, how deep can deep neural networks really go. This is the 3rd project from the **Visual Scrambling** series in which I go through the most influential classic architectures, ending with a unique visual model design written and designed by me.
 
 Developed in 2015 for image recognition, it won the **ImageNet Large Scale Visual Recognition Challenge** of that year.
 
@@ -17,32 +19,40 @@ In this work, I implement and study four ResNet-style architectures, scaling fro
 
 ```
 ├── IMAGES
-│   ├── The-ResNet-12-architecture.png # image of the ResNet-12 type architecture implemented   
-│   ├── The-ResNet-18-architecture.png # image of the ResNet-18 type architecture implemented       
-│   ├── The-ResNet-34-architecture.png # image of the ResNet-34 type architecture implemented   
-│   └── The-ResNet-50-architecture.png # image of the ResNet-50 type architecture implemented   
-│  
+│   ├── The-ResNet-12-architecture.png  # image of the ResNet-12 type architecture implemented   
+│   ├── The-ResNet-18-architecture.png  # image of the ResNet-18 type architecture implemented       
+│   ├── The-ResNet-34-architecture.png  # image of the ResNet-34 type architecture implemented   
+│   └── The-ResNet-50-architecture.png  # image of the ResNet-50 type architecture implemented   
+│
+|
 ├── models/    # models initialization code and architecture breakdown
+|   ├── __init__.py  # define __all__ for ResNet models imports
 │   ├── ResNet_12.py
 │   ├── ResNet_18.py
 │   ├── ResNet_34.py
 │   └── ResNet_50.py
 │
+|
 ├── Theory/
-
-
-
+|   ├── BatchNorm.ipynb  # explaining Batch Normalization
+│   ├── BottleneckLayers.ipynb  # explaining Bottleneck Layers
+│   ├── Pool_Flatten_Classify.ipynb  # explaining the pool-flatten-classify sequence present at the end of the forward pass
+│   ├── ResNet-50-Residual_Block.png  # Used as example inside BottleneckLayers.ipynb
+│   └── Residual_neural_network.ipynb  # explaining Residual Networks
+|
+|
 ├── src/
-│   ├── utils.py # ReLU + LeakyReLU from scratch (the activation functions used in ResNet)
+|   ├── __init__.py #  define __all__ for activation functions imports
+│   └── utils.py  # ReLU + LeakyReLU from scratch (the activation functions used in ResNet)
 │
+|
+├── LICENSE  # the MIT License of the project
 │
-├── LICENSE # the MIT License of the project
+├── pyproject.toml  # project dependencies
 │
-├── pyproject.toml # project dependencies
-│
-├── README.md # repository motivation + learning goals
+├── README.md  # repository motivation + learning goals
 │   
-└── test.ipynb # models training + loss visualization + confusion matrix & classification report computation
+└── test.ipynb  # models training + loss visualization + confusion matrix & classification report computation
 
 ```
 
