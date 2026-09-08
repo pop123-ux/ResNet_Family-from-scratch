@@ -9,8 +9,8 @@ EPOCHS: int = 30
 class BatchNorm(nn.Module):
     def __init__(self, num_features, eps=1e-05, momentum=0.1, device=None):
         super().__init__()
-        self.weight = nn.Parameter(torch.ones(num_features))
-        self.bias = nn.Parameter(torch.zeros(num_features))
+        self.weight = nn.Parameter(torch.ones(num_features)) # gamma γ
+        self.bias = nn.Parameter(torch.zeros(num_features)) # beta β
         
         self.eps = eps
         self.momentum = momentum
