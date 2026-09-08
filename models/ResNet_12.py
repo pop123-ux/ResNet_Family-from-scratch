@@ -55,7 +55,7 @@ class BatchNorm(nn.Module):
         return scale
 
 class ResidualBlock(nn.Module):
-    def __init__(self, num_features: int, stride: int = 1, kernel_size: int = 3, padding: int = 1, leaky: bool = False): # ResNet-12 uses num_features = 64, as the in_channels = out_channels of the convolutional layers stacked inside the residual block 
+    def __init__(self, num_features: int, kernel_size: int = 3, padding: int = 1, leaky: bool = False): # ResNet-12 uses num_features = 64, as the in_channels = out_channels of the convolutional layers stacked inside the residual block 
         super().__init__()
         self.leaky = leaky
         self.activation = LeakyReLU() if leaky else ReLU()
@@ -99,8 +99,8 @@ class ResNet_12(nn.Module):
     6. ResNet Block-3 (C7, C8): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
     7. ResNet Block-4 (C9, C10): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
     8. ResNet Block-5 (C11, C12): Two 3x3 conv layers, 64 feature maps, stride 1, pad 1, output size 64x2x24 w/ skip connections
-    9. GAP (Global Average Pooling): 2x24 kernel size, output size 64x1x1 # Collapses all spatial elements per channel into a single mean value
-    10. F13 (Fully Connected Layer): 96 output neurons (will implement nn.Flatten -> 64 connected to 96 target classes)
+    9. GAP (Global Average Pooling): Adaptive average pooling reduces each 64-channel spatial feature map to 1x1.
+    10. F13 (Fully Connected Layer): 96 output neurons
     
     Notes taken while writing this Layer Breakdown:
     - In contrast to standard few-shot ResNet-12 architectures that increase feature map depth (e.g, 64 -> 160 -> 320 -> 640), this custom variant maintains a constant depth of 64 channels across all 5 blocks, which keeps the total parameter footprint exceptionally lightweight.
@@ -135,7 +135,7 @@ class ResNet_12(nn.Module):
         
         self.avgpool2 = nn.AdaptiveAvgPool2d((1, 1))
         
-        self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # in_features[C, H, W] = 2072
+        self.fc7 = nn.Linear(in_features=64*1*1, out_features=num_classes) # # 64x1x1 -> 64 input features
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Entry input size: [Batch, 1, 7, 96]
