@@ -107,7 +107,7 @@ class ResNet_12(nn.Module):
     Notes taken while writing this Layer Breakdown:
     - In contrast to standard few-shot ResNet-12 architectures that increase feature map depth (e.g, 64 -> 160 -> 320 -> 640), this custom variant maintains a constant depth of 64 channels across all 5 blocks, which keeps the total parameter footprint exceptionally lightweight.
     - Because the spatial dimensions become highly compressed (2x24) right after the initial MaxPool layer, the 5 consecutive ResNet blocks use padding=1 and stride=1. This geometric trick acts to preserve the remaining structural matrix completely intact, allowing deep information extraction w/o losing coordinates before the final pool.
-    - Stacking 10 convolutional layers inside the residual blocks allows the network to learn intricate hierarchical transformations. Since each block bypasses its original input via a shortcut line, gradients can flow backwards unimpeded during training, preventing the vanishing gradient problem
+    - Stacking 10 convolutional layers inside the residual blocks allows the network to learn intricate hierarchical transformations. Since each block bypasses its original input via a shortcut connection, skip connections provide shorter gradient paths, improving gradient flow and helping mitigate the vanishing-gradient problem.
     - GAP reduces sensitivity to exact spatial locations and greatly reduces the classifier parameter count, providing a useful regularizing effect.
     """
     
