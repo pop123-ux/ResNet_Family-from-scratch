@@ -152,7 +152,7 @@ class ResNet_34(nn.Module):
            self.layer3_4 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
            self.layer3_5 = ResidualBlock(in_features=256, out_features=256, stride=1, num_layers=2, leaky=leaky)
 
-           # Resnet Layer-4 - Resolution [7, 7]
+           # ResNet Layer-4 - Resolution [7, 7]
            # 1 downsampling residual block followed by 2 identity residual blocks -> 3 total blocks of 2 layers each
            self.layer4_downsample = ResidualBlock(in_features=256, out_features=512, stride=2, num_layers=2, leaky=leaky)
            self.layer4_1 = ResidualBlock(in_features=512, out_features=512, stride=1, num_layers=2, leaky=leaky)
