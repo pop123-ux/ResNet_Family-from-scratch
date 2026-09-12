@@ -118,9 +118,9 @@ class ResNet_18(nn.Module):
     """
     
     DEFAULT_WEIGHTS = (
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ResNet18_model.pth')
-    if '__file__' in locals()
-    else 'ResNet18_model.pth'
+    os.path.join(os.path.dirname(os.path.abspath(__file__))),
+    "checkpoints",
+    "ResNet18_model.pth",
     )
     
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
