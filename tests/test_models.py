@@ -2,8 +2,11 @@
 
 These tests intentionally avoid datasets and training loops. They only verify that each
 architecture can be instantiated, execute a complete forward pass, produce the expected
-classifier shape, and propagate gradients through the network.
+classifier shape, propagate gradients through the network, and expose valid checkpoint
+metadata for the pretrained models distributed by the repository.
 """
+
+from pathlib import Path
 
 import pytest
 import torch
@@ -22,6 +25,12 @@ MODEL_CASES = [
     # every residual stage.
     pytest.param(ResNet_34, (1, 3, 64, 64), 100, id="resnet34"),
     pytest.param(ResNet_50, (1, 3, 64, 64), 100, id="resnet50"),
+]
+
+CHECKPOINT_CASES = [
+    pytest.param(ResNet_12, "ResNet12_cifar100.pth", id="resnet12-checkpoint"),
+    pytest.param(ResNet_18, "ResNet18_cifar100.pth", id="resnet18-checkpoint"),
+    pytest.param(ResNet_34, "ResNet34_cifar100.pth", id="resnet34-checkpoint"),
 ]
 
 
@@ -69,3 +78,17 @@ def test_parameter_counter_matches_pytorch(model_cls, _, __):
     expected = sum(parameter.numel() for parameter in model.parameters())
 
     assert model.params() == expected
+
+
+@pytest.mark.parametrize("model_cls,checkpoint_name", CHECKPOINT_CASES)
+def test_pretrained_checkpoint_paths(model_cls, checkpoint_name):
+    """Distributed pretrained models should point to the root checkpoints directory."""
+    checkpoint = Path(model_cls.DEFAULT_WEIGHTS)
+
+    assert checkpoint.parent.name == "checkpoints"
+    assert checkpoint.name == checkpoint_name
+
+
+def test_resnet50_has_no_default_checkpoint():
+    """ResNet-50 is structurally tested but has no distributed pretrained run."""
+    assert ResNet_50.DEFAULT_WEIGHTS is None
