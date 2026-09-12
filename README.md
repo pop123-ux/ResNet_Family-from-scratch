@@ -245,7 +245,7 @@ Implementing Batch Normalization manually also made the distinction between **tr
 ```bibtex
 @inproceedings{he2016deep,
  title = {Deep Residual Learning for Image Recognition},
- author = {He, Kaiming and Zhang, Xiaoyu and Ren, Shaoqing and Sun, Jian},
+ author = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
  pages = {770--778},
  year = {2016}
