@@ -3,7 +3,6 @@
 
 - - -
 
-## Four ResNet-style architectures reconstructed in PyTorch, with residual blocks, custom BatchNorm, theory notebooks, and CIFAR-100 experiments.
 ![Cool Image of ResNet-50 should be here](IMAGES/The-ResNet-50-architecture.png)
 _The ResNet-50 architecture implemented inside this project_
 
