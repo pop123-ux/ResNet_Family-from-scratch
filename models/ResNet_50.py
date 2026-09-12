@@ -336,6 +336,15 @@ class ResNet_50(nn.Module):
     def load(self, path=None, device=None):
         """Loads the model's weights from a file."""
         path = path or self.DEFAULT_WEIGHTS
+        
+        if path is None:
+            if self.DEFAULT_WEIGHTS is None:
+                raise ValueError(
+                "No default pretrained checkpoint is distributed for ResNet_50. "
+                "Pass a checkpoint path explicitly."
+                )
+            path = self.DEFAULT_WEIGHTS
+                    
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
