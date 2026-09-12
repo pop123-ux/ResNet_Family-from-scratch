@@ -107,7 +107,7 @@ where $L$ is the index of a deeper residual block and $\ell$ is the index of som
 
 ### Backward Propagation
 
-The residual learning formulation provides the added benefit of mitigating the **vanishing gradient problem** to some extent. However, it is crucial to acknowledge that the vanishing gradient issue is not the root cause of the degradation problem, which is tackled through the use of normalization.
+The residual learning formulation provides the added benefit of mitigating the **vanishing gradient problem** to some extent. However, it is crucial to acknowledge that the vanishing gradient issue is not the same as the degradation problem explained in the ResNet paper. Residual learning addresses the optimization degradation observed when increasingly deep plain networks become harder to train, while normalization separately helps stabilize optimization.
 
 To observe the effect of residual blocks on backpropagation, consider the partial derivative of a loss function $\mathcal{E}$ with respect to some residual block input $x_{\ell}$. Using the equation above from forward propagation for a later residual block $L > \ell$:
 
@@ -160,7 +160,7 @@ I chose CIFAR-100 because it provides a significantly more manageable environmen
 
 The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model — a deliberately compact custom residual architecture used to explore residual mechanics before scaling to canonical stage-based models
 
-### Results + Model Comparison
+### Recorded CIFAR-100 Experiments
 
 Current training plots:
 
@@ -175,8 +175,9 @@ Current training plots:
 
 **ResNet-50**
 
-`—`
-
+No recorded CIFAR-100 training run is distributed for this architecture.
+Its structural correctness is instead covered by the automated forward/backward
+CI tests.
 
 **Model statistics:**
 
@@ -187,7 +188,7 @@ Current training plots:
 | ResNet-34 | `BasicBlock` | `224x224` | `21,335,972` |`1,2320` | `65,04%` |
 | ResNet-50 | `BottleneckBlock` | `224x224` | `23,712,932` | `—` | `—` |
 
-`test.ipynb` is intended to additionally expose:
+[`notebooks/test_colab.ipynb`](notebooks/test_colab.ipynb) is intended to additionally expose:
 
 - dataset loading off of hugging face
 - building the image transformations necessary to enable proper fitting of the batches into the first layers of the models
@@ -200,7 +201,7 @@ Current training plots:
 
 ## Pretrained checkpoints 
 
-The repository includes the weights produces by the CIFAR-100 experiments shown in [`test_colab.ipynb`](notebooks/test_colab.ipynb).
+The repository includes the weights produces by the CIFAR-100 experiments shown in [`test_colab.ipynb`](notebooks/test_colab.ipynb). Checkpoints are stored with Git LFS.
 
 ## Lessons learned
 
