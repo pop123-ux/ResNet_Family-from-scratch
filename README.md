@@ -198,6 +198,10 @@ Current training plots:
 - confusion matrices (on ResNet-34 model, due to having the highest accuracy)
 - and... architectural differences between the four networks
 
+## Pretrained checkpoints 
+
+The repository includes the weights produces by the CIFAR-100 experiments shown in [`test_colab.ipynb`](notebooks/test_colab.ipynb).
+
 ## Lessons learned
 
 In my former **LeNet-5-from-scratch** and **AlexNet-from-scratch** repositories, a large part of the challenge was understanding how convolution, pooling, stride and padding transformed the spatial dimensions of a tensor.
