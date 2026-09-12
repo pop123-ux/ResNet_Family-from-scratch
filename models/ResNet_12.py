@@ -111,10 +111,10 @@ class ResNet_12(nn.Module):
     - GAP reduces sensitivity to exact spatial locations and greatly reduces the classifier parameter count, providing a useful regularizing effect.
     """
     
-    DEFAULT_WEIGHTS = (
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "checkpoints",
-    "ResNet12_cifar100.pth",
+    DEFAULT_WEIGHTS = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "checkpoints",
+        "ResNet12_cifar100.pth",
     )
     
     def __init__(self, in_channels: int = 1, num_classes: int = 96, leaky: bool = False):
