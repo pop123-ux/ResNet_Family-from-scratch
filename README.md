@@ -143,13 +143,14 @@ Current training plots:
 ![Plots](IMAGES/ResNet_12_train_val_plot.png)
 
 **ResNet-18**
-![Plots](IMAGES/ResNet_18_train_val_plot2.png)
+![Plots](IMAGES/ResNet_18_train_val_plot.png)
 
 **ResNet-34**
-![Plots](IMAGES/ResNet_34_train_val_plot1.png)
+![Plots](IMAGES/ResNet_34_train_val_plot.png)
 
 **ResNet-50**
-![Plots](IMAGES/ResNet_50_train_val_plot1.png)
+![Plots](IMAGES/ResNet_50_train_val_plot.png)
+`TBD`
 
 
 Model statistics:
