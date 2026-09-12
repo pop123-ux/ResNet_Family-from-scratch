@@ -121,7 +121,7 @@ class ResNet_50(nn.Module):
     DEFAULT_WEIGHTS = (
     os.path.join(os.path.dirname(os.path.abspath(__file__))),
     "checkpoints",
-    "ResNet50_model.pth",
+    "ResNet50_cifar100.pth",
     )
     
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
