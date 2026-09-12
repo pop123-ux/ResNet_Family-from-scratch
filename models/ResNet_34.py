@@ -112,10 +112,10 @@ class ResNet_34(nn.Module):
         - In contrast to deeper versions like ResNet-50, this architecture uses basic residual blocks consisting of two 3x3 convolutional layers instead of bottleneck designs, striking a balance between representational capacity and parameter efficiency.
         """
     
-        DEFAULT_WEIGHTS = (
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "checkpoints",
-        "ResNet34_cifar100.pth",
+        DEFAULT_WEIGHTS = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "checkpoints",
+            "ResNet34_cifar100.pth",
         )
     
         def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
