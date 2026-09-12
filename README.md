@@ -2,21 +2,34 @@
 <img width="1672" height="941" alt="263e673b-fca5-498d-a940-ac6236ef079e" src="https://github.com/user-attachments/assets/33aa216f-f1f0-4ee6-a7e9-9aef6ea7124d" />
 
 - - -
+
+## Four ResNet-style architectures reconstructed in PyTorch, with residual blocks, custom BatchNorm, theory notebooks, and CIFAR-100 experiments.
 ![Cool Image of ResNet-50 should be here](IMAGES/The-ResNet-50-architecture.png)
 _The ResNet-50 architecture implemented inside this project_
 
-
 This is my working in-depth reimplementation of revolutionary convolutional neural network family that really put to question, how deep can deep neural networks really go. This is the 3rd project from the **Visual Scrambling** series in which I go through the most influential classic architectures, ending with a unique visual model design written and designed by me.
+
+**Quick note:** “From scratch” in Visual Scrambling means reconstructing the architecture directly from its design/paper rather than importing torchvision.models.resnet*. Convolution, pooling and linear algebra still use PyTorch primitives. Selected operations—such as activation functions and Batch Normalization—are implemented manually for educational purposes.
 
 Developed in 2015 for image recognition, it won the **ImageNet Large Scale Visual Recognition Challenge** of that year.
 
-The novelty of the design consists of adapting a _residual connection_, stabilizing the training and convergence of deep neural networks with dozens to hundreds of layers, contemporarily being expanded to transformer models (such as **BERT**, and **GPT** models--the first ones adopting the "transformer" architecture).
+Residual learning was introduced to address the optimization degradation observed as networks became deeper. Identity shortcuts also create shorter paths through which information and gradients can propagate.
 
 In this work, I implement and study four ResNet-style architectures, scaling from a deliberately small ResNet-12 variant to the Bottleneck-based ResNet-50.
 
 **The main goal** of this repository is understanding skip connections, residual blocks, projection shortcuts, feature-map scaling, Batch Normalization, and the transition from shallow CNNs toward genuinely deep architectures.
 
 **A second goal** was dissecting the ResNet-like architectures solely from the pictures observed ([see here](IMAGES)) and translating the thorough graphical details into PyTorch code
+
+## Visual Scrambling Progression Chart ##
+
+| Part | Architecture | Historical shift | What I learned
+| :--- | :--- | :--- | :--- |
+| `01` | `LeNet-5` | `CNN fundamentals` | `convolution geometry, pooling, RBF output, broadcasting` |
+| `02` | `AlexNet` | `deep GPU-era CNNs` | `ReLU, droput, large feature hierarchies` |
+| `03` | `ResNet Family` | `very deep residual networks` | `skip connections, projection shortcuts, BatchNorm, bottlenecks` |
+
+**Visual Scrambling thesis:** understand an architecture deeply enough to reconstruct it before allowing a high-level library to hide its structure
 
 ## Layout ##
 
@@ -48,15 +61,20 @@ In this work, I implement and study four ResNet-style architectures, scaling fro
 |   ├── __init__.py #  define __all__ for activation functions imports
 │   └── utils.py  # ReLU + LeakyReLU from scratch (the activation functions used in ResNet)
 │
+├── notebooks/
+│   └── test_colab.ipynb  # models training on CIFAR-100 + loss visualization + confusion matrix plotting
 |
+├── tests/
+│   ├── test_models.py  # instantiate all four architectures and perform a random-tensor forward pass
+│   └── test_batchnorm.py
+|
+├── .github/workflows/
+|   └── tests.yml
+|
+├── .gitignore
 ├── LICENSE  # the MIT License of the project
-│
 ├── pyproject.toml  # project dependencies
-│
-├── README.md  # repository motivation + learning goals
-│   
-└── test.ipynb  # models training on CIFAR-100 + loss visualization + confusion matrix plotting
-
+└── README.md  # repository motivation + learning goals
 ```
 
 ## Now a short math lesson on Residual Blocks
@@ -102,7 +120,7 @@ This formulation suggests that the gradient computation of a shallower layer, $\
 
 **Source:** [Wikipedia - Residual Neural Network](https://en.wikipedia.org/wiki/Residual_neural_network)
 
-Residual blocks have been adapted to multiple variants, such as Basic, Bottleneck, and Pre-activation, but for the sake of this not turning into a skip connection course, I'll not break them down here (you can still read more about the one specific type used in ResNet_50-from-scratch [here](Theory/BottleneckLayers.ipynb))
+Residual blocks have been adapted to multiple variants, such as Basic, Bottleneck, and Pre-activation, but for the sake of this not turning into a skip connection course, I'll not break them down here (you can still read more about the one specific type used in **ResNet_50-from-scratch** [here](Theory/BottleneckLayers.ipynb))
 
 ## The 4 architectures
 
@@ -133,11 +151,11 @@ CIFAR-100 contains 60,000 32×32 RGB images distributed over **100 classes:**
 | | Split | Images | Size | Labels |
 | --- | --- | --- | --- | --- |
 | Train | 50,000 | `32x32` | 3 (RGB) | 100 |
-| Val | 10,000 | `32x32` | 3 (RGB) | 100 |
+| Test | 10,000 | `32x32` | 3 (RGB) | 100 |
 
 I chose CIFAR-100 because it provides a significantly more manageable environment than reproducing the original full ImageNet experiments while still being difficult enough for differences between the architectures to become visible.
 
-The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model, I name "the Toy" of this experiment, due to the strange input/output format, but also to the expected low validation loss on this dataset —— I genuinely wanted to test my torch.nn layer building skills with this one :) )
+The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model — a deliberately compact custom residual architecture used to explore residual mechanics before scaling to canonical stage-based models
 
 ### Results + Model Comparison
 
@@ -153,17 +171,18 @@ Current training plots:
 ![Plots](IMAGES/ResNet_34_train_val_plot.png)
 
 **ResNet-50**
-TBD
+
+`—`
 
 
-Model statistics:
+**Model statistics:**
 
-| Model | Parameters | Val. Loss | Val. Accuracy |
-| :--- | :--- | :--- | :--- |
-| ResNet-12 | `377,124` | `3,2480` | `22.63%` |
-| ResNet-18 | `11,227,812` | `1,1423` | `61,25%` |
-| ResNet-34 | `21,335,972` | `1,2320` | `65,04%` |
-| ResNet-50 | `23,712,932` | `TBD` | `TBD` |
+| Model | Design | Experiment input | Parameters | Val. Loss | Val. Accuracy |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ResNet-12-like | `Custom BasicBlock` | `irregular-architecture-specific` | `377,124` | `3,2480` | `22.63%` |
+| ResNet-18-like | `Modified BasicBlock` | `100x100` | `11,227,812` | `1,1423` | `61,25%` |
+| ResNet-34 | `BasicBlock` | `224x224` | `21,335,972` |`1,2320` | `65,04%` |
+| ResNet-50 | `BottleneckBlock` | `224x224` | `23,712,932` | `—` | `—` |
 
 `test.ipynb` is intended to additionally expose:
 
@@ -210,10 +229,11 @@ Implementing Batch Normalization manually also made the difference between **tra
 ```
 **CIFAR**
 ```
-@misc{imagenette,
-  author    = "Jeremy Howard",
-  title     = "imagenette",
-  url       = "https://github.com/fastai/imagenette/"
+@TECHREPORT{Krizhevsky09learningmultiple,
+    author = {Alex Krizhevsky},
+    title = {Learning multiple layers of features from tiny images},
+    institution = {},
+    year = {2009}
 }
 ```
 
