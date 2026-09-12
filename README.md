@@ -109,11 +109,12 @@ One thing I specifically wanted this repository to show is that **ResNet is not 
 
 The same residual-learning principle can be progressively scaled through different block counts, channel widths and, eventually, entirely different residual-block designs.
 
-Architecture	Residual design	Main stage configuration	Final feature width	Role in this repository
-ResNet-12	Basic residual blocks	5 custom blocks	64	Smallest / introductory residual model
-ResNet-18	Basic residual blocks	4 residual stages	512	Transition toward multi-stage ResNet
-ResNet-34	Basic residual blocks	3 + 4 + 6 + 3	512	Deep BasicBlock architecture
-ResNet-50	Bottleneck blocks	3 + 4 + 6 + 3	2048	Bottleneck architecture / deepest implementation
+| Architecture | Residual design | Main stage configuration | Final feature width | Role in this repository |
+| :--- | :--- | :--- | :--- | :--- |
+| ResNet-12 | Basic residual blocks | 5 custom blocks | 64 | Smallest / introductory residual model |
+| ResNet-18 | Basic residual blocks | 4 residual stages | 512 | Transition toward multi-stage ResNet |
+| ResNet-34 | Basic residual blocks | 3 + 4 + 6 + 3 | 512 | Deep BasicBlock architecture |
+| ResNet-50 | Bottleneck blocks | 3 + 4 + 6 + 3 | 2048 | Bottleneck architecture / deepest implementation |
 
 The implementations are not all intended to be exact interchangeable reproductions of the original ImageNet models. The earlier models also serve as architectural experiments which make the evolution of the family easier to inspect.
 
@@ -133,7 +134,7 @@ CIFAR-100 contains 60,000 32×32 RGB images distributed over **100 classes:**
 
 I chose CIFAR-100 because it provides a significantly more manageable environment than reproducing the original full ImageNet experiments while still being difficult enough for differences between the architectures to become visible.
 
-The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model, I name "the Toy" of this experiment, due to the strange input/output format, but also to the expected low validation loss on this dataset——I genuinely wanted to test my torch.nn layer building skills with this one :) )
+The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model, I name "the Toy" of this experiment, due to the strange input/output format, but also to the expected low validation loss on this dataset —— I genuinely wanted to test my torch.nn layer building skills with this one :) )
 
 ### Results + Model Comparison
 
@@ -149,14 +150,13 @@ Current training plots:
 ![Plots](IMAGES/ResNet_34_train_val_plot.png)
 
 **ResNet-50**
-![Plots](IMAGES/ResNet_50_train_val_plot.png)
-`TBD`
+TBD
 
 
 Model statistics:
 
-| | Model | Parameters | Val. Loss | Val. Accuracy |
-| --- | --- | --- | --- | --- | --- | --- |
+| Model | Parameters | Val. Loss | Val. Accuracy |
+| :--- | :--- | :--- | :--- |
 | ResNet-12 | `377,124` | `3,2480` | `22.63%` |
 | ResNet-18 | `11,227,812` | `1,1423` | `61,25%` |
 | ResNet-34 | `21,335,972` | `1,2320` | `65,04%` |
