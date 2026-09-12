@@ -117,10 +117,10 @@ class ResNet_18(nn.Module):
     - Extra: When BatchNorm immediately follows a convolutional layer, the convolutional bias becomes redundant because BatchNorm subtracts the channel mean and then applies its own learnable beta shift. Setting bias=False therefore avoids unnecessary parameters.
     """
     
-    DEFAULT_WEIGHTS = (
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "checkpoints",
-    "ResNet18_cifar100.pth",
+    DEFAULT_WEIGHTS = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "checkpoints",
+        "ResNet18_cifar100.pth",
     )
     
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
