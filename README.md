@@ -232,7 +232,7 @@ Implementing Batch Normalization manually also made the difference between **tra
 ```
 @inproceedings{he2016deep,
  title = {Deep Residual Learning for Image Recognition},
- author = {He, Kaiming and Zhang, Xiangyu and Sun, Jian},
+ author = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
  pages = {770--778},
  year = {2016} }
