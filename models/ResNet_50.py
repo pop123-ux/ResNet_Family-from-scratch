@@ -118,11 +118,7 @@ class ResNet_50(nn.Module):
     - This architecture introduces a 3-layer "bottleneck" design per residual block (using 1x1, 3x3, and 1x1 convolutions). The initial 1x1 convolution reduces dimensionality, the 3x3 convolution operated on a smaller channel volume, and the final 1x1 convolution restores the high-dimensional projection, significantly limiting parameter explosion while deepening the model. 
     """
     
-    DEFAULT_WEIGHTS = (
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "checkpoints",
-    "ResNet50_cifar100.pth",
-    )
+    DEFAULT_WEIGHTS = None # ResNet-50 has not been fully pretrained in the version of the project
     
     def __init__(self, in_channels: int = 3, num_classes: int = 1000, leaky: bool = False):
         super().__init__()
