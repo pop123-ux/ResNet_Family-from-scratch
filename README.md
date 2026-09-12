@@ -1,4 +1,6 @@
 # ResNet_Family-from-scratch in Pure PyTorch
+[![Tests](https://github.com/pop123-ux/ResNet_Family-from-scratch/actions/workflows/tests.yml/badge.svg)](https://github.com/pop123-ux/ResNet_Family-from-scratch/actions/workflows/tests.yml)
+
 <img width="1672" height="941" alt="263e673b-fca5-498d-a940-ac6236ef079e" src="https://github.com/user-attachments/assets/33aa216f-f1f0-4ee6-a7e9-9aef6ea7124d" />
 
 - - -
@@ -230,7 +232,7 @@ Implementing Batch Normalization manually also made the difference between **tra
 ```
 @inproceedings{he2016deep,
  title = {Deep Residual Learning for Image Recognition},
- author = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+ author = {He, Kaiming and Zhang, Xiangyu and Sun, Jian},
  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
  pages = {770--778},
  year = {2016} }
