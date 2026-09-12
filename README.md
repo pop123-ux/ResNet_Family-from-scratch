@@ -13,7 +13,7 @@ In this work, I implement and study four ResNet-style architectures, scaling fro
 
 **The main goal** of this repository is understanding skip connections, residual blocks, projection shortcuts, feature-map scaling, Batch Normalization, and the transition from shallow CNNs toward genuinely deep architectures.
 
-**A second goal** was dissecting the ResNet-like architectures solely from the pictures inside [](IMAGES) and translating the thorough graphical details into PyTorch code
+**A second goal** was dissecting the ResNet-like architectures solely from the pictures observed ([see here](IMAGES)) and translating the thorough graphical details into PyTorch code
 
 ## Layout ##
 
@@ -52,7 +52,7 @@ In this work, I implement and study four ResNet-style architectures, scaling fro
 │
 ├── README.md  # repository motivation + learning goals
 │   
-└── test.ipynb  # models training + loss visualization + confusion matrix & classification report computation
+└── test.ipynb  # models training on CIFAR-100 + loss visualization + confusion matrix plotting
 
 ```
 
@@ -135,27 +135,6 @@ I chose CIFAR-100 because it provides a significantly more manageable environmen
 
 The purpose of these experiments was to observe how increasingly deep residual architectures behave under a shared experimental setting (but of course using different image augmentation transformations, due to the nature of the architectures haveing different input sizes, as were the case for the ResNet_12 model, I name "the Toy" of this experiment, due to the strange input/output format, but also to the expected low validation loss on this dataset——I genuinely wanted to test my torch.nn layer building skills with this one :) )
 
-### Experimental setup
-
-The completed configuration of the repository production is as follows:
-
-| Category | Setting |
-| --- | --- |
-| Hardware | `NVIDIA Tesla T4` |
-| Software | `Python, PyTorch, torchvision` |
-| Dataset | `CIFAR-100` |
-| Epochs | `20` |
-| Batch size | `128` |
-| Optimizer | `SGD` |
-| Learning Rate | `0.05` |
-| Momentum | `0.9` |
-| Weight decay | `5e-4` |
-| Scheduler | `MultiStepLR` |
-| Random Seed | `41` |
-| Runtime | `TBD` |
-
-The important part of the final comparison will be ensuring that the models being compared were evaluated under an equivalent setup (except for "the Toy" ResNet_12 model)
-
 ### Results + Model Comparison
 
 Current training plots:
@@ -172,32 +151,26 @@ Current training plots:
 **ResNet-50**
 ![Plots](IMAGES/ResNet_50_train_val_plot1.png)
 
-Experimental section currently being finalized.
 
-The implementations themselves are already part of the repository, while the final validation-loss measurements, classification metrics, and controlled side-by-side comparison are still being completed.
+Model statistics:
 
-I would rather leave these values explicitly unfinished than publish numbers produced under slightly different experimental conditions and pretend they form a fair comparison.
-
-The final table will follow approximately this format:
-
-| | Model | Parameters | Val. Loss | Val. Accuracy | Precision | Recall |
+| | Model | Parameters | Val. Loss | Val. Accuracy |
 | --- | --- | --- | --- | --- | --- | --- |
-| ResNet-12 | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` |
-| ResNet-18 | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` |
-| ResNet-34 | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` |
-| ResNet-50 | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` | `TBD` |
+| ResNet-12 | `377,124` | `3,2480` | `22.63%` |
+| ResNet-18 | `11,227,812` | `1,1423` | `61,25%` |
+| ResNet-34 | `21,335,972` | `1,2320` | `65,04%` |
+| ResNet-50 | `23,712,932` | `TBD` | `TBD` |
 
 `test.ipynb` is intended to additionally expose:
 
+- dataset loading off of hugging face
+- building the image transformations necessary to enable proper fitting of the batches into the first layers of the models
+- visualizations of the each 4 custom image transformations on the CIFAR-100 dataset
+- initialization of the dataloaders for model training
 - training and validation loss evolution
 - validation accuracy
-- confusion matrices
-- per-class precision
-- per-class recall
-- per-class F1-score
-- and.. architectural differences between the four networks
-
-I would much rather leave these numbers as TBD temporarily than place results from different training conditions next to each other and pretend they constitute a controlled comparison.
+- confusion matrices (on ResNet-34 model, due to having the highest accuracy)
+- and... architectural differences between the four networks
 
 ## Lessons learned
 
@@ -258,8 +231,6 @@ If this project is your first encounter with the series, the previous implementa
 
 **03 — ResNet Family:**
 This repository.
-
-From **LeNet → AlexNet → ResNet**, the goal remains the same:
 
 **understand the architecture before letting a library hide it.**
 
