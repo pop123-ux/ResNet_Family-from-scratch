@@ -113,7 +113,7 @@ class ResNet_34(nn.Module):
         """
     
         DEFAULT_WEIGHTS = (
-        os.path.join(os.path.dirname(os.path.abspath(__file__))),
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "checkpoints",
         "ResNet12_cifar100.pth",
         )
