@@ -40,9 +40,9 @@ In this work, I implement and study four ResNet-style architectures, scaling fro
 │   └── The-ResNet-50-architecture.png  # image of the ResNet-50 type architecture implemented   
 │
 ├── checkpoints/
-│   ├── ResNet_12_model.pth
-│   ├── ResNet_18_model.pth
-│   └── ResNet_34_model.pth
+│   ├── ResNet12_cifar100.pth
+│   ├── ResNet18_cifar100.pth
+│   └── ResNet34_cifar100.pth
 |
 ├── models/    # models initialization code and architecture breakdown
 |   ├── __init__.py  # define __all__ for ResNet models imports
