@@ -1,4 +1,7 @@
 # ResNet_Family-from-scratch in Pure PyTorch
+<img width="1672" height="941" alt="263e673b-fca5-498d-a940-ac6236ef079e" src="https://github.com/user-attachments/assets/33aa216f-f1f0-4ee6-a7e9-9aef6ea7124d" />
+
+- - -
 ![Cool Image of ResNet-50 should be here](IMAGES/The-ResNet-50-architecture.png)
 _The ResNet-50 architecture implemented inside this project_
 
